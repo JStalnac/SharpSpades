@@ -9,6 +9,10 @@ A work-in-progress [Ace of Spades Classic](https://buildandshoot.com/) v0.75 ser
 ## Contributing
 Feel free to send us a PR or create an issue if you find any problems!
 
+### TODO
+ - .vxl file loader
+ - Creating a Client class for managing player connections
+
 ### Project structure
 `SharpSpades` - The heart of the server, contains all the server code
 
