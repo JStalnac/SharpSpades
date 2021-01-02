@@ -12,7 +12,7 @@ namespace Tests
         [SetUp]
         public void Setup()
         {
-            builder = new FieldBuilder();
+            builder = new FieldBuilder(null);
         }
 
         [Test]
