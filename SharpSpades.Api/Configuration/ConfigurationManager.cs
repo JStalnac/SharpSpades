@@ -63,12 +63,15 @@ namespace SharpSpades.Api.Configuration
                   }
               });
         }
-        
+
         /// <summary>
         /// Adds a new configuration that will be kept track of by the <see cref="ConfigurationManager"/>.
         /// </summary>
         /// <param name="path">The path to the configuration file the configuration should be read from.</param>
         /// <param name="file">The configuration that will be added.</param>
+        /// <exception cref="ArgumentException">The provided path is not a relative path.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="path"/> is null or empty or <paramref name="file"/> is null.</exception>
+        /// <exception cref="InvalidOperationException">A configuration with the same path is alreay added to the <see cref="ConfigurationManager"/>.</exception>
         public void AddConfiguration(string path, ConfigurationFile file)
         {
             // Zero-length string won't be a proper path to a file.

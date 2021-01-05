@@ -163,11 +163,11 @@ namespace SharpSpades.Api.Configuration
             foreach (var t in table.Tables)
                 toml.Add(t.Name, WriteToToml(t));
             foreach (var field in table.Fields)
-                toml.Add(field.Name, GetValue(field.InitialValue)!);
+                toml.Add(field.Name, CopyValue(field.InitialValue)!);
             return toml;
         }
 
-        private static TomlNode GetValue(TomlNode node)
+        private static TomlNode CopyValue(TomlNode node)
         {
             if (node is TomlArray a)
             {
