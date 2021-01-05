@@ -56,7 +56,7 @@ namespace SharpSpades.Api.Configuration
         {
             if (builder is null)
                 throw new InvalidOperationException($"This {nameof(ConfigurationFileBuilder)} is already built.");
-            var file = new ConfigurationFile(builder?.Build());
+            var file = new ConfigurationFile(builder.Build()!);
             // Won't be needing this anymore
             builder = null!;
             return file;

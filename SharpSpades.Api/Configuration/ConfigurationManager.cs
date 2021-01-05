@@ -3,7 +3,7 @@ using SharpSpades.Api.Utils;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using Tommy;
+using System.Reactive.Linq;
 
 #nullable enable
 
@@ -16,24 +16,52 @@ namespace SharpSpades.Api.Configuration
     public sealed class ConfigurationManager
     {
         private readonly string rootPath;
-        private readonly ILogger<ConfigurationManager> logger;
+        private readonly IDisposable disposable;
+        private readonly ILogger logger;
         private readonly FileSystemWatcher fileSystemWatcher;
-        private readonly Dictionary<FileInfo, ConfigurationFile> configurations = new();
+        private readonly Dictionary<string, ConfigurationFile> configurations = new();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ConfigurationManager"/> class.
         /// </summary>
-        /// <param name="rootPath">The root path in the filesystem that the <see cref="ConfigurationManager"/> will be listening on.</param>
-        public ConfigurationManager(string rootPath, ILogger<ConfigurationManager> logger)
+        /// <param name="rootPath">The root path in the filesystem that the <see cref="ConfigurationManager"/> will be listening on. If the value is null the current directory of the process will be used.</param>
+        /// <param name="logger">The logger that log messages will written to by the <see cref="ConfigurationManager"/> and its configurations.</param>
+        public ConfigurationManager(string? rootPath, ILogger logger)
         {
-            Throw.IfNull(rootPath, nameof(rootPath));
             Throw.IfNull(logger, nameof(logger));
-            // Will fail if the path is not valid
-            this.rootPath = Path.Combine(Directory.GetCurrentDirectory(), rootPath);
-            fileSystemWatcher = new(this.rootPath);
-            fileSystemWatcher.NotifyFilter = NotifyFilters.LastWrite;
-            fileSystemWatcher.Changed += FileSystemWatcher_Changed;
+
+            if (rootPath == ".")
+                throw new ArgumentException($"'{rootPath}' is not a valid path.");
+
+            // Will fail in most cases if the path is not valid
+            this.rootPath = !String.IsNullOrEmpty(rootPath) ? Path.Combine(Directory.GetCurrentDirectory(), rootPath) : Directory.GetCurrentDirectory();
+            fileSystemWatcher = new(this.rootPath)
+            {
+                NotifyFilter = NotifyFilters.LastWrite,
+                IncludeSubdirectories = true,
+                EnableRaisingEvents = true
+            };
             this.logger = logger;
+            // Listen for events
+            disposable = Observable
+              .FromEventPattern<FileSystemEventArgs>(fileSystemWatcher, "Changed")
+              .Throttle(TimeSpan.FromSeconds(1))
+              .Subscribe(x =>
+              {
+                  if (configurations.TryGetValue(x.EventArgs.FullPath, out var config))
+                  {
+                      logger.LogInformation($"Detected changes in '{x.EventArgs.FullPath}'. Updating...");
+                      try
+                      {
+                          config.Reload();
+                      }
+                      catch (Exception ex)
+                      {
+                          logger.LogError(ex, $"Failed to update file '{x.EventArgs.FullPath}'");
+                      }
+                      logger.LogInformation($"Updated '{x.EventArgs.FullPath}'");
+                  }
+              });
         }
         
         /// <summary>
@@ -43,35 +71,41 @@ namespace SharpSpades.Api.Configuration
         /// <param name="file">The configuration that will be added.</param>
         public void AddConfiguration(string path, ConfigurationFile file)
         {
-            Throw.IfNull(path, nameof(path));
+            // Zero-length string won't be a proper path to a file.
+            if (String.IsNullOrEmpty(path))
+                throw new ArgumentNullException(nameof(path));
             Throw.IfNull(file, nameof(file));
+
             if (Path.IsPathRooted(path))
                 throw new ArgumentException("The path must be a relative path", nameof(path));
+
             var fileInfo = new FileInfo(Path.Combine(rootPath, path));
-            if (configurations.ContainsKey(fileInfo))
+            if (configurations.ContainsKey(fileInfo.FullName))
                 throw new InvalidOperationException("The file path is already used by an existing configuration");
-            configurations.Add(fileInfo, file);
-            fileSystemWatcher.EnableRaisingEvents = true;
+            file.File = fileInfo;
+            file.logger = logger;
+
+            // Initialize the file
+            file.Reload();
+
+            // Add the file here so that it won't get updated possibly
+            configurations.Add(fileInfo.FullName, file);
         }
 
-        private void FileSystemWatcher_Changed(object sender, FileSystemEventArgs e)
+        /// <summary>
+        /// Gets a configuration with the specified path. The configuration must have been added to the <see cref="ConfigurationManager"/>.
+        /// </summary>
+        /// <param name="path">The path for the configuration. The path can be absolute or relative.</param>
+        /// <returns>The configuration file at the specified path.</returns>
+        public ConfigurationFile GetConfiguration(string path)
         {
-            var fileInfo = new FileInfo(e.FullPath);
-            if (configurations.TryGetValue(fileInfo, out var config))
-            {
-                // TODO: Read data
-                // TODO: Update configuration
-            }
-        }
-        
-        private void UpdateConfiguration(ConfigurationFile config, TomlTable data)
-        {
-            throw new NotImplementedException();
-        }
-
-        private void InitializeConfiguration(FileInfo file, ConfigurationFile config)
-        {
-            throw new NotImplementedException();
+            string p = null!;
+            if (Path.IsPathRooted(path))
+                p = path;
+            p = Path.Combine(rootPath, path);
+            if (configurations.TryGetValue(p, out var config))
+                return config;
+            throw new KeyNotFoundException($"Could not find a configuration with the name '{path}'");
         }
     }
 }
