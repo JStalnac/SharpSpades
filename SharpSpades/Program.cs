@@ -9,7 +9,7 @@ namespace SharpSpades
         {
             try
             {
-                var server = new Server(null, null);
+                var server = new Server(null);
                 await server.StartAsync();
             }
             finally

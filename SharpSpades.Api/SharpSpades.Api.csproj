@@ -6,8 +6,8 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Logging" Version="5.0.0" />
+    <PackageReference Include="Nett.Coma" Version="0.15.0" />
     <PackageReference Include="System.Reactive.Linq" Version="5.0.0" />
-    <PackageReference Include="Tommy" Version="2.0.0" />
   </ItemGroup>
 
 </Project>
