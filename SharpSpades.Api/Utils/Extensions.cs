@@ -1,22 +1,41 @@
-﻿using System;
-using System.Linq;
-using System.Text.RegularExpressions;
+﻿using Nett.Coma;
+using System;
+using System.Linq.Expressions;
+
+#nullable enable
 
 namespace SharpSpades.Api.Utils
 {
     public static class Extensions
     {
-        public static string ToSnakeCase(this string s)
+        /// <summary>
+        /// Tries to get the value from <paramref name="config"/>. If the operations fails the error will be returned in<paramref name="error"/>.
+        /// </summary>
+        /// <typeparam name="T">The type of the configuration.</typeparam>
+        /// <typeparam name="TOut">Type of the return value.</typeparam>
+        /// <param name="config"></param>
+        /// <param name="selector"></param>
+        /// <param name="value">The return value of the get operation.</param>
+        /// <param name="defaultValue">The default value passed to the get operation. Returned in <paramref name="value"/> if the operation fails.</param>
+        /// <param name="error">The error that the config threw if the operation failed.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="config"/> is <c>null</c> or <paramref name="selector"/> is <c>null</c>.</exception>
+        /// <returns>True if the operations succeeds else False.</returns>
+        public static bool TryGet<T, TOut>(this Config<T> config, Expression<Func<T, TOut>> selector, out TOut? value, out Exception? error, TOut defaultValue) where T : class
         {
-            Throw.IfNull(s);
-            // https://www.30secondsofcode.org/c-sharp/s/to-snake-case
-            return String.Join('_', Regex.Matches(s, "[A-Z]{2,}(?=[A-Z][a-z]+[0-9]*|\b)|[A-Z]?[a-z]+[0-9]*|[A-Z]|[0-9]+")).ToLower();
-        }
-
-        public static string ToTitleCase(this string s)
-        {
-            Throw.IfNull(s);
-            return String.Join("", s.Split('_').Select(x => String.Join("", x[0].ToString().ToUpper(), x.Substring(1))));
+            Throw.IfNull(config, nameof(config));
+            Throw.IfNull(selector, nameof(selector));
+            try
+            {
+                value = config.Get(selector, defaultValue);
+                error = null;
+            }
+            catch (Exception ex)
+            {
+                error = ex;
+                value = defaultValue;
+                return false;
+            }
+            return true;
         }
     }
 }
