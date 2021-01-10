@@ -1,4 +1,5 @@
 ﻿using ENet.Managed;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace SharpSpades
@@ -9,7 +10,7 @@ namespace SharpSpades
         {
             try
             {
-                var server = new Server(null);
+                var server = new Server(Directory.GetCurrentDirectory());
                 await server.StartAsync();
             }
             finally

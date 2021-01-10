@@ -1,45 +1,74 @@
 ﻿using ENet.Managed;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Nett;
-using Nett.Coma;
 using Serilog;
 using Serilog.Events;
 using SharpSpades.Api;
 using SharpSpades.Api.Utils;
 using System;
+using System.IO;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+
+#nullable enable
 
 namespace SharpSpades
 {
     public class Server : IServer
     {
         public readonly CancellationTokenSource cts = new();
-        public Config<ServerConfiguration> Config { get; }
+        public IConfigurationRoot Configuration { get; }
         public ILoggerFactory LoggerFactory { get; }
         public ILogger<Server> Logger { get; }
+        public string RootDirectory { get; }
         
         public Server(string configurationDirectory)
         {
             Throw.IfNull(configurationDirectory, nameof(configurationDirectory));
-
-            Toml.WriteFile<ServerConfiguration>(new(), "config.toml");
             
-            Config = Nett.Coma.Config.CreateAs()
-                .MappedToType(() => new ServerConfiguration())
-                .StoredAs(store => store.File("config.toml").AccessedBySource("app", out _))
-                .Initialize();
+            RootDirectory = Path.IsPathRooted(configurationDirectory)
+                ? configurationDirectory
+                : Path.Combine(Directory.GetCurrentDirectory(), configurationDirectory);
 
-            var loggingConfig = Config.Get(x => x.LogLevels, new());
+            // Create the config file
+            string configFile = Path.Combine(RootDirectory, "config.toml");
+            if (!File.Exists(configFile))
+                Toml.WriteFile<ServerConfiguration>(new(), configFile);
+
+            try
+            {
+                Configuration = new ConfigurationBuilder()
+                    .SetBasePath(RootDirectory)
+                    .AddTomlFile("config.toml")
+                    .Build();
+            }
+            catch
+            {
+                Console.WriteLine($"Failed to load configuration");
+                throw;
+            }
+
+            LoggingConfiguration loggingConfig;
+            try
+            {
+                loggingConfig = Configuration.GetSection("LogLevels").Get<LoggingConfiguration>();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to load logging config. Using default logging config. Exception:\n{ex}");
+                loggingConfig = new();
+            }
+
             LoggerFactory = Microsoft.Extensions.Logging.LoggerFactory.Create(c =>
             {
                 var logger = new LoggerConfiguration()
                     .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] [{SourceContext}] {Message:lj}{NewLine}{Exception}");
                 if (!String.IsNullOrEmpty(loggingConfig.LogFile))
                 {
-                    logger.WriteTo.File(path: null,
-                        outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] [{SourceContext}] {Message:lj}{NewLine}{Exception}");
+                    logger.WriteTo.File(path: loggingConfig.LogFile, rollingInterval: loggingConfig.RollDaily ? RollingInterval.Day : RollingInterval.Infinite,
+                            shared: true, outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] [{SourceContext}] {Message:lj}{NewLine}{Exception}");
                 }
 
                 // Apply default log level
@@ -64,7 +93,7 @@ namespace SharpSpades
                     logger.MinimumLevel.Override(s, LogEventLevel.Error);
                 foreach (string s in loggingConfig.Fatal)
                     logger.MinimumLevel.Override(s, LogEventLevel.Fatal);
-                
+
                 c.AddSerilog(logger.CreateLogger(), true);
             });
             
