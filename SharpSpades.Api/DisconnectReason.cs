@@ -2,6 +2,7 @@
 {
     public enum DisconnectReason
     {
+        Undefined = 0,
         Banned = 1,
         IPConnectionLimitExceeded = 2,
         WrongProtocolVersion = 3,
