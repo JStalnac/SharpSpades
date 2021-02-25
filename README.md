@@ -1,6 +1,8 @@
 ﻿# SharpSpades
 A work-in-progress [Ace of Spades Classic](https://buildandshoot.com/) v0.75 server implementation
 
+Inspired by [Piqueserver](https://github.com/piqueserver/piqueserver) and [Obsidian](https://github.com/ObsidianMC/Obsidian)
+
 ## Features
 **Coming**
  - Plugins
