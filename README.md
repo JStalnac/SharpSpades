@@ -12,7 +12,7 @@ Inspired by [Piqueserver](https://github.com/piqueserver/piqueserver) and [Obsid
 Feel free to send us a PR or create an issue if you find any problems!
 
 ### TODO
- - .vxl file loader
+ - Map to vxl converter
  - Creating a Client class for managing player connections
 
 ### Project structure
