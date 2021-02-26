@@ -9,3 +9,5 @@ obj/
 
 # Map files
 *.vxl
+
+!SharpSpades.Vxl
