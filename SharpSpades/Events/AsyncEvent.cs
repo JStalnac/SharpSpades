@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 // This is somewhat inspired by Discord.NET 
 // asynchronous event code
 
-namespace Obsidian.API.Events
+namespace SharpSpades.Events
 {
     /// <summary>
     /// Represents an asynchronous event handler.
