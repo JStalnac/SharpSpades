@@ -8,6 +8,7 @@ namespace SharpSpades
         [TomlComment(" The port that the server will listen on")]
         public ushort Port { get; set; } = 32887;
         public LoggingConfiguration LogLevels { get; set; } = new();
+        public string MapName { get; set; } = "classicgen.vxl";
     }
 
     public class LoggingConfiguration

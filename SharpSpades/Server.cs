@@ -1,14 +1,23 @@
 ﻿using ENet.Managed;
+using ENet.Managed.Async;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Nett;
 using Serilog;
+using Serilog.Core.Enrichers;
 using Serilog.Events;
+using Serilog.Sinks.SystemConsole.Themes;
 using SharpSpades.Api;
 using SharpSpades.Api.Utils;
+using SharpSpades.Net;
+using SharpSpades.Vxl;
 using System;
+using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -23,7 +32,13 @@ namespace SharpSpades
         public ILoggerFactory LoggerFactory { get; }
         public ILogger<Server> Logger { get; }
         public string RootDirectory { get; }
-        
+        public ConcurrentDictionary<ENetAsyncPeer, Client> Clients { get; } = new();
+        public Map? Map { get; private set; }
+
+        private volatile bool started;
+
+        public const short MaxPlayers = 32;
+
         public Server(string configurationDirectory)
         {
             Throw.IfNull(configurationDirectory, nameof(configurationDirectory));
@@ -106,11 +121,39 @@ namespace SharpSpades
         public Microsoft.Extensions.Logging.ILogger GetLogger(string categoryName)
             => LoggerFactory.CreateLogger(categoryName);
 
-        public Task StartAsync()
+        public async Task StartAsync()
         {
-            ushort port = 32887;
+            if (started)
+                throw new InvalidOperationException("The server is already running");
+            started = true;
+
+            // Get port
+            ushort port;
+            try
+            {
+                port = Configuration.GetValue<ushort>("Port", 32887);
+            }
+            catch (Exception)
+            {
+                port = 32887;
+            }
 
             Logger.LogInformation("Loading");
+
+            Stopwatch sw = new();
+
+            // Load the map
+            Logger.LogInformation("Loading map...");
+
+            string mapName = Configuration["MapName"] ?? "classicgen.vxl";
+
+            sw.Start();
+            await Task.Run(() => LoadMap(mapName));
+            sw.Stop();
+
+            Logger.LogInformation("Loaded map (Took {0:0.00} s)", sw.Elapsed.TotalSeconds);
+            
+            // Load ENet
             if (!ManagedENet.Started)
             {
                 Logger.LogInformation("Loading ENet libraries...");
@@ -119,70 +162,135 @@ namespace SharpSpades
 
             var listenEndPoint = new IPEndPoint(IPAddress.Loopback, port);
 
+            // Create host
             Logger.LogDebug("Creating host...");
-            ENetHost host;
+            ENetAsyncHost host;
             try
             {
-                host = new ENetHost(listenEndPoint, 1, 1);
+                host = new ENetAsyncHost(listenEndPoint, MaxPlayers, 1);
             }
             catch (NullReferenceException)
             {
                 Logger.LogCritical("Failed to initialize ENet. Is the library initialized?");
-                return Task.CompletedTask;
+                return;
             }
             catch (Exception ex)
             {
                 Logger.LogCritical(ex, "Failed to create host");
-                return Task.CompletedTask;
+                return;
             }
-
+            
             // Important for the clients to be able to connect
             host.CompressWithRangeCoder();
 
-            Logger.LogInformation($"Ready");
+            Logger.LogInformation("Starting host");
+            await host.StartAsync();
+            
+            Logger.LogInformation("Ready");
             Logger.LogDebug($"Listening on port {port}");
 
             try
             {
                 while (!cts.IsCancellationRequested)
                 {
-                    var ev = host.Service(TimeSpan.FromMilliseconds(10));
-
-                    switch (ev.Type)
+                    var peer = await host.AcceptAsync(cts.Token);
+                    
+                    // Only v0.75 is supported
+                    if (peer.ConnectData != 3)
                     {
-                        case ENetEventType.None:
-                            continue;
-                        case ENetEventType.Connect:
-                            Logger.LogInformation($"Peer connected: {ev.Peer.GetRemoteEndPoint()}");
-                            if (ev.Data != 3)
-                                // Only v0.75 is supported
-                                ev.Peer.Disconnect((uint)DisconnectReason.WrongProtocolVersion);
-                            continue;
-                        case ENetEventType.Disconnect:
-                            Logger.LogInformation($"Peer disconnected: {ev.Peer.GetRemoteEndPoint()}");
-                            continue;
-                        case ENetEventType.Receive:
-                            Logger.LogInformation($"Received data: {ev.Peer.GetRemoteEndPoint()}: {string.Join("", ev.Packet.Data.ToArray())}");
-                            ev.Packet.Destroy();
-                            continue;
+                        await peer.DisconnectAsync((uint)DisconnectReason.WrongProtocolVersion);
+                        Logger.LogInformation($"A client tried to connect with unsupported protocol version: {peer.ConnectData}");
+                        return;
                     }
+
+                    if (Clients.Count >= MaxPlayers)
+                    {
+                        await peer.DisconnectAsync((uint)DisconnectReason.ServerFull);
+                        Logger.LogInformation("A client tried to connect but the server was full.");
+                        return;
+                    }
+
+                    Logger.LogInformation($"Client connected: {peer.RemoteEndPoint}");
+                    
+                    byte id = GetFreeId(Clients.Select(c => c.Value.Id).ToArray());
+                    
+                    var client = new Client(this, peer, id);
+                    client.Disconnected += p => Clients.TryRemove(p, out _);
+                    Clients.TryAdd(peer, client);
+                    _ = Task.Run(client.StartAsync)
+                        .ContinueWith(t =>
+                        {
+                            Logger.LogError(t.Exception, "An exception occured in a client thread");
+                        }, TaskContinuationOptions.OnlyOnFaulted);
+
+                    Logger.LogDebug("Clients connected: {0}", Clients.Count);
                 }
-                
+            }
+            catch (OperationCanceledException)
+            {
+                // The server is stopping
+            }
+            catch (Exception ex)
+            {
+                Logger.LogCritical(ex, "Network loop threw an unhandled exception");
             }
             finally
             {
-                Logger.LogDebug("Disposing host");
-                host.Dispose();
-            }
+                if (!cts.IsCancellationRequested)
+                    cts.Cancel();
 
-            // TODO: Handle Ctrl + C
-            return Task.CompletedTask;
+                // TODO: Disconnect clients
+                
+                Logger.LogDebug("Stopping host");
+                await host.FlushAsync();
+                Logger.LogDebug("All packets flushed");
+
+                await host.StopAsync();
+
+                Logger.LogDebug("Host stopped");
+
+                Logger.LogTrace("Disposing host");
+                host.Dispose();
+
+                Logger.LogInformation("Server stopped");
+            }
         }
 
-        public Task StopAsync()
+        public async Task StopAsync()
         {
+            if (cts.IsCancellationRequested)
+                return;
+            Logger.LogInformation("Stopping server");
             cts.Cancel();
-            return Task.CompletedTask;
+            await Task.CompletedTask;
+        }
+
+        private void LoadMap(string name)
+        {
+            using (var fs = new FileStream(name, FileMode.Open))
+                Map = Map.Load(fs);
+        }
+
+        internal static byte GetFreeId(byte[] inUse)
+        {
+            if (inUse.Length == 0)
+                return 0;
+
+            byte[] ids = inUse.OrderBy(x => x)
+                .ToArray();
+            byte id = 0;
+
+            for (int i = 0; i < inUse.Length; i++)
+            {
+                byte lowest = inUse[i];
+
+                for (; id <= lowest; id++)
+                {
+                    if (id != lowest)
+                        return id;
+                }
+            }
+            return id;
         }
 
         private static LogEventLevel? GetLevel(string level)
