@@ -1,6 +1,9 @@
-﻿using System;
+﻿using SharpCompress.Compressors;
+using SharpCompress.Compressors.Deflate;
+using System;
 using System.Buffers.Binary;
 using System.Collections;
+using System.Collections.Immutable;
 using System.Drawing;
 using System.IO;
 
@@ -16,13 +19,15 @@ namespace SharpSpades.Vxl
         // One bit per block
         private readonly BitArray geometry;
 
-        // Five bytes per block
-        private readonly int?[] colors;
-        
+        //// Five bytes per block
+        //private readonly int?[] colors;
+
+        public ImmutableArray<byte> RawData { get; private set; }
+
         public Map()
         {
             geometry = new(MapX * MapY * MapZ, true);
-            colors = new int?[MapX * MapY * MapZ];
+            //colors = new int?[MapX * MapY * MapZ];
         }
         
         public static Map Load(Stream stream)
@@ -37,6 +42,15 @@ namespace SharpSpades.Vxl
             for (int y = 0; y < MapY; y++)
                 for (int x = 0; x < MapX; x++)
                     ReadColumn(stream, map, x, y);
+
+            stream.Position = 0;
+            using (var ms = new MemoryStream())
+            {
+                using (var zlibStream = new ZlibStream(ms, CompressionMode.Compress, CompressionLevel.BestCompression))
+                    stream.CopyTo(zlibStream);
+                map.RawData = ms.ToArray().ToImmutableArray();
+            }
+
             return map;
         }
 
@@ -57,11 +71,11 @@ namespace SharpSpades.Vxl
                     map.geometry.Set(GetIndex(x, y, z), false);
 
                 // Set top color
-                Span<byte> colorData = span.Colors;
+                //Span<byte> colorData = span.Colors;
                 for (z = span.ColorStart; z < span.ColorEnd; z++)
                 {
-                    map.colors[GetIndex(x, y, z)] = BinaryPrimitives.ReadInt32LittleEndian(colorData.Slice(0, 4));
-                    colorData = colorData.Slice(4);
+                    //map.colors[GetIndex(x, y, z)] = BinaryPrimitives.ReadInt32LittleEndian(colorData.Slice(0, 4));
+                    //colorData = colorData.Slice(4);
                 }
 
                 // Last span of the column
@@ -76,8 +90,8 @@ namespace SharpSpades.Vxl
                 // Bottom color run
                 for (z = nextSpan.AirStart - bottomColorLength; z < nextSpan.AirStart; z++)
                 {
-                    map.colors[GetIndex(x, y, z)] = BinaryPrimitives.ReadInt32LittleEndian(colorData.Slice(0, 4));
-                    colorData = colorData.Slice(4);
+                    //map.colors[GetIndex(x, y, z)] = BinaryPrimitives.ReadInt32LittleEndian(colorData.Slice(0, 4));
+                    //colorData = colorData.Slice(4);
                 }
 
                 span = nextSpan;
@@ -123,42 +137,42 @@ namespace SharpSpades.Vxl
             && y >= 0 && y < MapY
             && z >= 0 && z < MapZ;
 
-        public void SetColor(int x, int y, int z, Color color)
-        {
-            // TODO: Test
-            Span<byte> span = stackalloc byte[]
-            {
-                color.R, color.G, color.B, color.A
-            };
-            SetColor(x, y, z, BinaryPrimitives.ReadInt32LittleEndian(span));
-        }
+        //public void SetColor(int x, int y, int z, Color color)
+        //{
+        //    // TODO: Test
+        //    Span<byte> span = stackalloc byte[]
+        //    {
+        //        color.R, color.G, color.B, color.A
+        //    };
+        //    SetColor(x, y, z, BinaryPrimitives.ReadInt32LittleEndian(span));
+        //}
 
-        public void SetColor(int x, int y, int z, int color)
-        {
-            int index = GetIndex(x, y, z);
-            geometry[index] = true;
-            colors[index] = color;
-        }
+        //public void SetColor(int x, int y, int z, int color)
+        //{
+        //    int index = GetIndex(x, y, z);
+        //    geometry[index] = true;
+        //    colors[index] = color;
+        //}
 
-        public void SetAir(int x, int y, int z)
-            => geometry[GetIndex(x, y, z)] = false;
+        //public void SetAir(int x, int y, int z)
+        //    => geometry[GetIndex(x, y, z)] = false;
 
-        public Color GetColor(int x, int y, int z)
-        {
-            int index = GetIndex(x, y, z);
+        //public Color GetColor(int x, int y, int z)
+        //{
+        //    int index = GetIndex(x, y, z);
             
-            if (!geometry[index])
-                return Color.Empty;
+        //    if (!geometry[index])
+        //        return Color.Empty;
 
-            int? color = colors[index];
-            return Color.FromArgb(color.HasValue ? color.Value : DefaultColor);
-        }
+        //    int? color = colors[index];
+        //    return Color.FromArgb(color.HasValue ? color.Value : DefaultColor);
+        //}
 
-        public int GetRawColor(int x, int y, int z)
-        {
-            int? color = colors[GetIndex(x, y, z)];
-            return color.HasValue ? color.Value : DefaultColor;
-        }
+        //public int GetRawColor(int x, int y, int z)
+        //{
+        //    int? color = colors[GetIndex(x, y, z)];
+        //    return color.HasValue ? color.Value : DefaultColor;
+        //}
 
         public bool IsSolid(int x, int y, int z)
             => geometry[GetIndex(x, y, z)];
