@@ -1,6 +1,5 @@
 ﻿using SharpSpades.Api.Utils;
 using System;
-using System.IO;
 
 namespace SharpSpades.Api.Net.Packets.State
 {

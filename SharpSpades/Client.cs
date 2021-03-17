@@ -10,7 +10,6 @@ using SharpSpades.Vxl;
 using System;
 using System.Buffers;
 using System.Drawing;
-using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -78,9 +77,6 @@ namespace SharpSpades.Net
                 // Disconnecting
             }
 
-            if (cts.IsCancellationRequested)
-                Logger.LogDebug("#{0}: Cancellation token requested cancellation", Id);
-
             Logger.LogInformation("#{0}: Disconnected", Id);
             Disconnected?.Invoke(peer);
         }
@@ -111,7 +107,7 @@ namespace SharpSpades.Net
                     MapData = data.Slice(0, count)
                 });
                 
-                data = data.Slice(count);
+                data = data.Slice(start: count);
             } while (data.Length > 0);
 
             // Send state
