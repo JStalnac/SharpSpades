@@ -1,5 +1,5 @@
-﻿using SharpSpades.Api.Utils;
-using SharpSpades.Api.Net;
+﻿using SharpSpades.Api.Net;
+using SharpSpades.Api.Utils;
 
 namespace SharpSpades.Api.Events
 {
