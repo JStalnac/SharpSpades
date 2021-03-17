@@ -10,6 +10,8 @@ namespace SharpSpades.Api.Net.Packets.State
 
         public uint MapSize { get; init; }
 
+        public int Length => sizeof(uint);
+
         public MapStart() { }
 
         public MapStart(uint mapSize)
@@ -17,12 +19,12 @@ namespace SharpSpades.Api.Net.Packets.State
             MapSize = mapSize;
         }
 
-        public void Read(MemoryStream ms)
+        public void Read(ReadOnlySpan<byte> buffer)
             => throw new NotImplementedException();
 
-        public void WriteTo(MemoryStream ms)
+        public void WriteTo(Span<byte> buffer)
         {
-            ms.WriteUInt32LittleEndian(MapSize);
+            buffer.WriteUInt32LittleEndian(MapSize);
         }
     }
 }

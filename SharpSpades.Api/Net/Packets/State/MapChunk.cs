@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 
 namespace SharpSpades.Api.Net.Packets.State
 {
@@ -9,6 +8,8 @@ namespace SharpSpades.Api.Net.Packets.State
 
         public ReadOnlyMemory<byte> MapData { get; init; }
 
+        public int Length => MapData.Length;
+
         public MapChunk() { }
 
         public MapChunk(ReadOnlyMemory<byte> mapData)
@@ -16,12 +17,12 @@ namespace SharpSpades.Api.Net.Packets.State
             MapData = mapData;
         }
 
-        public void Read(MemoryStream ms)
+        public void Read(ReadOnlySpan<byte> buffer)
             => throw new NotImplementedException();
 
-        public void WriteTo(MemoryStream ms)
+        public void WriteTo(Span<byte> buffer)
         {
-            ms.Write(MapData.Span);
+            MapData.Span.CopyTo(buffer);
         }
     }
 }

@@ -1,11 +1,13 @@
 ﻿using SharpSpades.Api.Utils;
-using System.IO;
+using System;
 using System.Numerics;
 
 namespace SharpSpades.Api.Net.Packets.State
 {
     public sealed class CtfState : IGameState
     {
+        public int Length => 52;
+
         public byte BlueScore { get; init; }
         public byte GreenScore { get; init; }
         public byte CaptureLimit { get; init; }
@@ -19,23 +21,23 @@ namespace SharpSpades.Api.Net.Packets.State
         public Vector3 BlueBasePosition { get; init; }
         public Vector3 GreenBasePosition { get; init; }
 
-        public void WriteTo(MemoryStream ms)
+        public void WriteTo(Span<byte> buffer)
         {
-            ms.WriteByte(BlueScore);
-            ms.WriteByte(GreenScore);
-            ms.WriteByte(CaptureLimit);
+            buffer[0] = BlueScore;
+            buffer[1] = GreenScore;
+            buffer[2] = CaptureLimit;
 
             byte team1HasIntel = BlueHasIntel ? 1 : 0;
             byte team2HasIntel = GreenHasIntel ? 1 : 0;
 
             byte intelFlags = (byte)(team1HasIntel | (team2HasIntel << 1));
-            ms.WriteByte(intelFlags);
+            buffer[3] = intelFlags;
 
-            BlueIntel.Write(ms);
-            GreenIntel.Write(ms);
+            BlueIntel.Write(buffer);
+            GreenIntel.Write(buffer);
 
-            ms.WritePositionLittleEndian(BlueBasePosition);
-            ms.WritePositionLittleEndian(GreenBasePosition);
+            buffer.WritePosition(BlueBasePosition);
+            buffer.WritePosition(GreenBasePosition);
         }
     }
 
@@ -50,16 +52,15 @@ namespace SharpSpades.Api.Net.Packets.State
 
         public Vector3 Position { get; init; }
 
-        internal void Write(MemoryStream ms)
+        internal void Write(Span<byte> buffer)
         {
             if (IsHeld)
             {
-                ms.WriteByte(Holder);
-                ms.Write(new byte[11]);
+                buffer[0] = Holder;
             }
             else
             {
-                ms.WritePositionLittleEndian(Position);
+                buffer.WritePosition(Position);
             }
         }
     }

@@ -8,6 +8,7 @@ using SharpSpades.Api.Net.Packets.State;
 using SharpSpades.Api.Utils;
 using SharpSpades.Vxl;
 using System;
+using System.Buffers;
 using System.Drawing;
 using System.IO;
 using System.Threading;
@@ -122,8 +123,6 @@ namespace SharpSpades.Net
                 FogColor = Color.HotPink,
                 State = new CtfState()
             });
-            
-            await Task.CompletedTask;
         }
 
         public async ValueTask SendPacket(IPacket packet)
@@ -132,21 +131,37 @@ namespace SharpSpades.Net
 
             // TODO: Trigger event
 
-            using var ms = new MemoryStream();
+            int length = packet.Length + 1;
+            byte[] buffer = ArrayPool<byte>.Shared.Rent(length);
 
+            // Limit the length of the buffer
+            Memory<byte> memory = ((Memory<byte>)buffer).Slice(0, length);
+            
             try
             {
-                ms.WriteByte(packet.Id);
-                packet.WriteTo(ms);
+                try
+                {
+                    memory.Span[0] = packet.Id;
+                    packet.WriteTo(memory.Span.Slice(1));
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex, "#{0}: Failed to write packet {1}", Id, packet.GetType());
+                    return;
+                }
+
+                // TODO: More packet flags
+                await peer.SendAsync(0, memory, ENetPacketFlags.Reliable);
             }
             catch (Exception ex)
             {
-                Logger.LogWarning(ex, $"Failed to write packet {packet.GetType()}");
-                return;
+                Logger.LogError(ex, "#{0} Failed to send packet", Id);
+                throw;
             }
-            
-            // TODO: More packet flags
-            await peer.SendAsync(0, ms.GetBuffer(), ENetPacketFlags.Reliable);
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(buffer);
+            }
         }
 
         /// <summary>

@@ -1,13 +1,14 @@
 ﻿using SharpSpades.Api.Utils;
 using System;
 using System.Drawing;
-using System.IO;
 
 namespace SharpSpades.Api.Net.Packets.State
 {
     public sealed class StateData : IPacket
     {
         public byte Id => 15;
+
+        public int Length => 6 + 3 * 3 + 20 + (int)State?.Length;
 
         /// <summary>
         /// The id of the player.
@@ -73,28 +74,33 @@ namespace SharpSpades.Api.Net.Packets.State
             GreenName = greenName;
         }
 
-        public void Read(MemoryStream ms)
+        public void Read(ReadOnlySpan<byte> buffer)
             => throw new NotImplementedException();
 
-        public void WriteTo(MemoryStream ms)
+        public void WriteTo(Span<byte> buffer)
         {
             if (State is null)
                 throw new InvalidOperationException("State cannot be null");
 
-            ms.WriteByte(PlayerId);
-            ms.WriteColor(FogColor);
-            ms.WriteColor(BlueColor);
-            ms.WriteColor(GreenColor);
+            buffer[0] = PlayerId;
+            buffer.WriteColor(FogColor, 1);
+            buffer.WriteColor(BlueColor, 4);
+            buffer.WriteColor(GreenColor, 7);
+
+            Span<byte> name = StringUtils.ToCP437String(BlueName);
+            name.CopyTo(buffer.Slice(8, 10));
+            name = StringUtils.ToCP437String(GreenName);
+            name.CopyTo(buffer.Slice(18, 10));
 
             if (State is CtfState ctf)
             {
-                ctf.WriteTo(ms);
-                ms.WriteByte(0);
+                buffer[29] = 0;
+                ctf.WriteTo(buffer.Slice(30));
             }
             else if (State is TcState tc)
             {
-                tc.WriteTo(ms);
-                ms.WriteByte(1);
+                buffer[29] = 1;
+                tc.WriteTo(buffer.Slice(30));
             }
             else
             {

@@ -1,7 +1,6 @@
 ﻿using SharpSpades.Api.Utils;
 using System;
 using System.Collections.Immutable;
-using System.IO;
 using System.Numerics;
 
 namespace SharpSpades.Api.Net.Packets.State
@@ -9,6 +8,8 @@ namespace SharpSpades.Api.Net.Packets.State
     public sealed class TcState : IGameState
     {
         const int MaxTerritories = 16;
+
+        public int Length => territories.Length * 4;
 
         private ImmutableArray<Territory> territories;
 
@@ -24,12 +25,14 @@ namespace SharpSpades.Api.Net.Packets.State
             }
         }
 
-        public void WriteTo(MemoryStream ms)
+        public void WriteTo(Span<byte> buffer)
         {
+            Span<byte> span = buffer;
             foreach (var t in territories)
             {
-                ms.WritePositionLittleEndian(t.Position);
-                ms.WriteByte((byte)t.State);
+                span.WritePosition(t.Position);
+                span[3] = (byte)t.State;
+                span = span.Slice(3);
             }
         }
     }
