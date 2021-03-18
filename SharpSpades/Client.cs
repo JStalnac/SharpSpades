@@ -72,10 +72,11 @@ namespace SharpSpades.Net
                     Logger.LogDebug("#{0}: Received packet with id {1}", Id, packetId);
                 }
             }
-            catch (OperationCanceledException)
+            catch (ENetAsyncPeerDisconnectedException)
             {
                 // Disconnecting
             }
+            catch (OperationCanceledException) { }
 
             Logger.LogInformation("#{0}: Disconnected", Id);
             Disconnected?.Invoke(peer);
@@ -156,7 +157,7 @@ namespace SharpSpades.Net
             }
             finally
             {
-                ArrayPool<byte>.Shared.Return(buffer);
+                ArrayPool<byte>.Shared.Return(buffer, true);
             }
         }
 

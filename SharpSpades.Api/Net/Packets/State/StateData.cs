@@ -37,9 +37,8 @@ namespace SharpSpades.Api.Net.Packets.State
             {
                 Throw.IfNull(value, nameof(value));
 
-                // We need space for the null byte
-                if (value.Length >= 10)
-                    throw new ArgumentOutOfRangeException("The team name can a maximum of nine characters long");
+                if (value.Length > 10)
+                    throw new ArgumentOutOfRangeException("The team name can a maximum of ten characters long");
 
                 blueName = value;
             }
@@ -51,9 +50,8 @@ namespace SharpSpades.Api.Net.Packets.State
             {
                 Throw.IfNull(value, nameof(value));
 
-                // We need space for the null byte
-                if (value.Length >= 10)
-                    throw new ArgumentOutOfRangeException("The team name can a maximum of nine characters long");
+                if (value.Length > 10)
+                    throw new ArgumentOutOfRangeException("The team name can a maximum of ten characters long");
 
                 greenName = value;
             }
@@ -88,19 +86,19 @@ namespace SharpSpades.Api.Net.Packets.State
             buffer.WriteColor(GreenColor, 7);
 
             Span<byte> name = StringUtils.ToCP437String(BlueName);
-            name.CopyTo(buffer.Slice(8, 10));
+            name.CopyTo(buffer.Slice(10, 10));
             name = StringUtils.ToCP437String(GreenName);
-            name.CopyTo(buffer.Slice(18, 10));
+            name.CopyTo(buffer.Slice(20, 10));
 
             if (State is CtfState ctf)
             {
-                buffer[29] = 0;
-                ctf.WriteTo(buffer.Slice(30));
+                buffer[30] = 0;
+                ctf.WriteTo(buffer.Slice(31));
             }
             else if (State is TcState tc)
             {
-                buffer[29] = 1;
-                tc.WriteTo(buffer.Slice(30));
+                buffer[30] = 1;
+                tc.WriteTo(buffer.Slice(31));
             }
             else
             {
