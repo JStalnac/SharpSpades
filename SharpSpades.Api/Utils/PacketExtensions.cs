@@ -181,8 +181,8 @@ namespace SharpSpades.Api.Utils
         public static void WritePosition(this Span<byte> buffer, Vector3 vector)
         {
             buffer.WriteFloatLittleEndian(vector.X);
-            buffer.WriteFloatLittleEndian(vector.Y, 1);
-            buffer.WriteFloatLittleEndian(vector.Z, 2);
+            buffer.WriteFloatLittleEndian(vector.Y, 4);
+            buffer.WriteFloatLittleEndian(vector.Z, 8);
         }
 
         /// <summary>

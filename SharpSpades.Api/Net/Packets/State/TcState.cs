@@ -9,9 +9,9 @@ namespace SharpSpades.Api.Net.Packets.State
     {
         const int MaxTerritories = 16;
 
-        public int Length => territories.Length * 4;
+        public int Length => 1 + territories.Length * 13;
 
-        private ImmutableArray<Territory> territories;
+        private ImmutableArray<Territory> territories = ImmutableArray<Territory>.Empty;
 
         public ImmutableArray<Territory> Territories
         {
@@ -27,12 +27,13 @@ namespace SharpSpades.Api.Net.Packets.State
 
         public void WriteTo(Span<byte> buffer)
         {
-            Span<byte> span = buffer;
+            buffer[0] = (byte)Territories.Length;
+            Span<byte> span = buffer.Slice(1);
             foreach (var t in territories)
             {
                 span.WritePosition(t.Position);
-                span[3] = (byte)t.State;
-                span = span.Slice(3);
+                span[12] = (byte)t.State;
+                span = span.Slice(13);
             }
         }
     }

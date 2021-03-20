@@ -8,7 +8,8 @@ namespace SharpSpades.Api.Net.Packets.State
     {
         public byte Id => 15;
 
-        public int Length => 6 + 3 * 3 + 20 + (int)State?.Length;
+        // Player Id, Gamemode Id, 3 * Color, 2 * Name
+        public int Length => 1 + 1 + 3 * 3 + 2 * 10 + (int)State?.Length;
 
         /// <summary>
         /// The id of the player.

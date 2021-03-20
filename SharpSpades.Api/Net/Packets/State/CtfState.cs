@@ -33,11 +33,11 @@ namespace SharpSpades.Api.Net.Packets.State
             byte intelFlags = (byte)(team1HasIntel | (team2HasIntel << 1));
             buffer[3] = intelFlags;
 
-            BlueIntel.Write(buffer);
-            GreenIntel.Write(buffer);
+            BlueIntel.Write(buffer.Slice(4, 12));
+            GreenIntel.Write(buffer.Slice(16, 12));
 
-            buffer.WritePosition(BlueBasePosition);
-            buffer.WritePosition(GreenBasePosition);
+            buffer.WritePosition(BlueBasePosition, 28);
+            buffer.WritePosition(GreenBasePosition, 40);
         }
     }
 
@@ -57,6 +57,7 @@ namespace SharpSpades.Api.Net.Packets.State
             if (IsHeld)
             {
                 buffer[0] = Holder;
+                buffer.Slice(1).Fill(0);
             }
             else
             {

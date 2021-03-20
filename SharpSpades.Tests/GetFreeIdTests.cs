@@ -1,8 +1,7 @@
 using NUnit.Framework;
-using SharpSpades;
 using System;
 
-namespace Tests
+namespace SharpSpades.Tests
 {
     public class GetFreeIdTests
     {
