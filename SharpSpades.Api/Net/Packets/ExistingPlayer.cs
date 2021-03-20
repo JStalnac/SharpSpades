@@ -10,8 +10,8 @@ namespace SharpSpades.Api.Net.Packets
 
         public int Length => 11 + Name.Length;
 
-        public byte Team { get; private set; }
-        public byte Weapon { get; private set; }
+        public TeamType Team { get; private set; }
+        public WeaponType Weapon { get; private set; }
         public byte HeldItem { get; private set; }
         public uint Kills { get; private set; }
         public Color Color { get; private set; }
@@ -19,8 +19,8 @@ namespace SharpSpades.Api.Net.Packets
 
         public void Read(ReadOnlySpan<byte> buffer)
         {
-            Team = buffer[0];
-            Weapon = buffer[1];
+            Team = (TeamType)buffer[0];
+            Weapon = (WeaponType)buffer[1];
             HeldItem = buffer[2];
 
             Kills = buffer.ReadUInt32LittleEndian(4);

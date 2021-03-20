@@ -10,6 +10,7 @@ using SharpSpades.Vxl;
 using System;
 using System.Buffers;
 using System.Drawing;
+using System.Numerics;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -69,7 +70,23 @@ namespace SharpSpades.Net
                     
                     // Process packet
                     byte packetId = packet.Data.Span[0];
-                    Logger.LogDebug("#{0}: Received packet with id {1}", Id, packetId);
+                    Logger.LogDebug("#{0}: Received packet with id {1}\n{2}", Id, packetId, HexDump.Create(packet.Data.Span).TrimEnd());
+
+                    if (packetId == 9)
+                    {
+                        // Existing player
+                        var existing = new ExistingPlayer();
+                        existing.Read(packet.Data.Span);
+
+                        await SendPacket(new CreatePlayer
+                        {
+                            PlayerId = Id,
+                            Weapon = WeaponType.Rifle,
+                            Team = TeamType.Blue,
+                            Position = new Vector3(200f, 200f, 0f),
+                            Name = existing.Name
+                        });
+                    }
                 }
             }
             catch (ENetAsyncPeerDisconnectedException)
@@ -77,9 +94,11 @@ namespace SharpSpades.Net
                 // Disconnecting
             }
             catch (OperationCanceledException) { }
-
-            Logger.LogInformation("#{0}: Disconnected", Id);
-            Disconnected?.Invoke(peer);
+            finally
+            {
+                Logger.LogInformation("#{0}: Disconnected", Id);
+                Disconnected?.Invoke(peer);
+            }
         }
 
         private async Task SendMap()
@@ -152,7 +171,7 @@ namespace SharpSpades.Net
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "#{0} Failed to send packet", Id);
+                Logger.LogError(ex, "#{0} Failed to send packet {1}", Id, packet.GetType());
                 throw;
             }
             finally

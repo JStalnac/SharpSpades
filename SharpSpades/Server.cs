@@ -4,9 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Nett;
 using Serilog;
-using Serilog.Core.Enrichers;
 using Serilog.Events;
-using Serilog.Sinks.SystemConsole.Themes;
 using SharpSpades.Api;
 using SharpSpades.Api.Utils;
 using SharpSpades.Net;
@@ -17,7 +15,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 
