@@ -1,6 +1,7 @@
 ﻿using SharpSpades.Api.Utils;
 using System;
 using System.Drawing;
+using System.Threading.Tasks;
 
 namespace SharpSpades.Api.Net.Packets.State
 {
@@ -106,5 +107,8 @@ namespace SharpSpades.Api.Net.Packets.State
                 throw new InvalidOperationException("This was not supposed to happen :(");
             }
         }
+
+        public Task HandleAsync(IClient client)
+            => Task.CompletedTask;
     }
 }

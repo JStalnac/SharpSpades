@@ -1,6 +1,7 @@
 ﻿using SharpSpades.Api.Utils;
 using System;
 using System.Drawing;
+using System.Threading.Tasks;
 
 namespace SharpSpades.Api.Net.Packets
 {
@@ -31,8 +32,9 @@ namespace SharpSpades.Api.Net.Packets
         }
 
         public void WriteTo(Span<byte> buffer)
-        {
-            throw new NotImplementedException();
-        }
+            => throw new NotImplementedException();
+
+        public Task HandleAsync(IClient client)
+            => Task.CompletedTask;
     }
 }

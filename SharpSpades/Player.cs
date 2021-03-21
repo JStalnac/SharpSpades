@@ -1,7 +1,6 @@
 ﻿using SharpSpades.Api;
 using SharpSpades.Api.Net;
 using SharpSpades.Api.Utils;
-using SharpSpades.Net;
 
 namespace SharpSpades
 {

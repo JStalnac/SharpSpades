@@ -16,7 +16,7 @@ using System.Threading.Tasks;
 
 #nullable enable
 
-namespace SharpSpades.Net
+namespace SharpSpades
 {
     public class Client : IClient
     {

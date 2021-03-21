@@ -7,7 +7,6 @@ using Serilog;
 using Serilog.Events;
 using SharpSpades.Api;
 using SharpSpades.Api.Utils;
-using SharpSpades.Net;
 using SharpSpades.Vxl;
 using System;
 using System.Collections.Concurrent;

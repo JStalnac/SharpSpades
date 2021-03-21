@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace SharpSpades.Api.Net.Packets
 {
@@ -23,5 +24,6 @@ namespace SharpSpades.Api.Net.Packets
         /// </summary>
         /// <param name="buffer">A buffer with the length specified in <see cref="Length"/>.</param>
         public void WriteTo(Span<byte> buffer);
+        public Task HandleAsync(IClient client);
     }
 }

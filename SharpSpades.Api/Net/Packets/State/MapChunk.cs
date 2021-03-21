@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace SharpSpades.Api.Net.Packets.State
 {
@@ -24,5 +25,8 @@ namespace SharpSpades.Api.Net.Packets.State
         {
             MapData.Span.CopyTo(buffer);
         }
+
+        public Task HandleAsync(IClient client)
+            => Task.CompletedTask;
     }
 }

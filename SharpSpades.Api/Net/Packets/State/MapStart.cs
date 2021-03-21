@@ -1,5 +1,6 @@
 ﻿using SharpSpades.Api.Utils;
 using System;
+using System.Threading.Tasks;
 
 namespace SharpSpades.Api.Net.Packets.State
 {
@@ -25,5 +26,8 @@ namespace SharpSpades.Api.Net.Packets.State
         {
             buffer.WriteUInt32LittleEndian(MapSize);
         }
+
+        public Task HandleAsync(IClient client)
+            => Task.CompletedTask;
     }
 }

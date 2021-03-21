@@ -1,6 +1,7 @@
 ﻿using SharpSpades.Api.Utils;
 using System;
 using System.Numerics;
+using System.Threading.Tasks;
 
 namespace SharpSpades.Api.Net.Packets
 {
@@ -30,5 +31,8 @@ namespace SharpSpades.Api.Net.Packets
             Span<byte> name = StringUtils.ToCP437String(Name);
             name.CopyTo(buffer.Slice(15));
         }
+
+        public Task HandleAsync(IClient client)
+            => Task.CompletedTask;
     }
 }
