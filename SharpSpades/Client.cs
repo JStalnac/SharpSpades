@@ -1,6 +1,7 @@
 ﻿using ENet.Managed;
 using ENet.Managed.Async;
 using Microsoft.Extensions.Logging;
+using Serilog.Events;
 using SharpSpades.Api;
 using SharpSpades.Api.Net;
 using SharpSpades.Api.Net.Packets;
@@ -9,8 +10,8 @@ using SharpSpades.Api.Utils;
 using SharpSpades.Vxl;
 using System;
 using System.Buffers;
+using System.Collections.Generic;
 using System.Drawing;
-using System.Numerics;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -29,6 +30,7 @@ namespace SharpSpades
         private readonly TaskCompletionSource<bool> DisconnectCompletionSource = new();
         private readonly CancellationTokenSource cts = new();
         private readonly ENetAsyncPeer peer;
+        private readonly Dictionary<byte, IPacket> packets = new();
         
         public Client(Server server, ENetAsyncPeer peer, byte id)
         {
@@ -38,8 +40,10 @@ namespace SharpSpades
             this.peer = peer;
             Logger = server.GetLogger<Client>();
             Id = id;
+
+            AddPackets();
         }
-        
+
         internal async Task StartAsync()
         {
             // We will get stuck in peer.ReceiveAsync if the peer disconnects.
@@ -66,27 +70,26 @@ namespace SharpSpades
             {
                 while (!cts.IsCancellationRequested && peer.IsConnected)
                 {
-                    using var packet = await peer.ReceiveAsync(cancellationToken);
+                    using var rawPacket = await peer.ReceiveAsync(cancellationToken);
                     
                     // Process packet
-                    byte packetId = packet.Data.Span[0];
-                    Logger.LogDebug("#{0}: Received packet with id {1}\n{2}", Id, packetId, HexDump.Create(packet.Data.Span).TrimEnd());
+                    byte packetId = rawPacket.Data.Span[0];
+                    Logger.LogTrace("#{0}: Received packet with id {1}\n{2}", Id, packetId, HexDump.Create(rawPacket.Data.Span).TrimEnd());
 
-                    if (packetId == 9)
+                    if (packets.TryGetValue(packetId, out var packet))
                     {
-                        // Existing player
-                        var existing = new ExistingPlayer();
-                        existing.Read(packet.Data.Span);
-
-                        await SendPacket(new CreatePlayer
+                        try
                         {
-                            PlayerId = Id,
-                            Weapon = WeaponType.Rifle,
-                            Team = TeamType.Blue,
-                            Position = new Vector3(200f, 200f, 0f),
-                            Name = existing.Name
-                        });
+                            packet.Read(rawPacket.Data.Span);
+                            await packet.HandleAsync(this);
+                        }
+                        catch (Exception ex)
+                        {
+                            Logger.LogWarning(ex, "#{0}: Failed to process packet with id {1}", Id, packetId);
+                        }
                     }
+                    else
+                        Logger.LogDebug("#{0}: Received packet with unknown id {1}", Id, rawPacket);
                 }
             }
             catch (ENetAsyncPeerDisconnectedException)
@@ -186,5 +189,15 @@ namespace SharpSpades
         /// <param name="reason"></param>
         public ValueTask DisconnectAsync(DisconnectReason reason)
             => peer.DisconnectAsync((uint)reason);
+
+        private void AddPackets()
+        {
+            AddPacket(new ExistingPlayer());
+
+            void AddPacket(IPacket packet)
+            {
+                packets.Add(packet.Id, packet);
+            }
+        }
     }
 }

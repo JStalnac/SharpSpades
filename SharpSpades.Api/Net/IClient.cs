@@ -8,6 +8,7 @@ namespace SharpSpades.Api.Net
     public interface IClient
     {
         byte Id { get; }
+        public IServer Server { get; }
         IPlayer? Player { get; }
 
         ValueTask DisconnectAsync(DisconnectReason reason);
