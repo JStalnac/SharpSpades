@@ -27,8 +27,8 @@ namespace SharpSpades.Api.Net.Packets.State
             buffer[1] = GreenScore;
             buffer[2] = CaptureLimit;
 
-            byte team1HasIntel = BlueHasIntel ? 1 : 0;
-            byte team2HasIntel = GreenHasIntel ? 1 : 0;
+            byte team1HasIntel = (byte)(BlueHasIntel ? 1 : 0);
+            byte team2HasIntel = (byte)(GreenHasIntel ? 1 : 0);
 
             byte intelFlags = (byte)(team1HasIntel | (team2HasIntel << 1));
             buffer[3] = intelFlags;
