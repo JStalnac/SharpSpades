@@ -74,10 +74,11 @@ namespace SharpSpades
                     
                     // Process packet
                     byte packetId = rawPacket.Data.Span[0];
-                    Logger.LogTrace("#{0}: Received packet with id {1}\n{2}", Id, packetId, HexDump.Create(rawPacket.Data.Span).TrimEnd());
-
+                    
                     if (packets.TryGetValue(packetId, out var packet))
                     {
+                        Logger.LogTrace("#{0}: Received {1} ({2})\n{3}", Id, packet.GetType().Name, packetId, HexDump.Create(rawPacket.Data.Span).TrimEnd());
+
                         try
                         {
                             packet.Read(rawPacket.Data.Span);
@@ -85,11 +86,11 @@ namespace SharpSpades
                         }
                         catch (Exception ex)
                         {
-                            Logger.LogWarning(ex, "#{0}: Failed to process packet with id {1}", Id, packetId);
+                            Logger.LogWarning(ex, "#{0}: Failed to process {1} ({2})", Id, packet.GetType().Name, packetId);
                         }
                     }
                     else
-                        Logger.LogDebug("#{0}: Received packet with unknown id {1}", Id, rawPacket);
+                        Logger.LogDebug("#{0}: Received packet with unknown id {1}", Id, packetId);
                 }
             }
             catch (ENetAsyncPeerDisconnectedException)
@@ -165,16 +166,19 @@ namespace SharpSpades
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogError(ex, "#{0}: Failed to write packet {1}", Id, packet.GetType());
+                    Logger.LogError(ex, "#{0}: Failed to write {1}", Id, packet.GetType().Name);
                     return;
                 }
 
                 // TODO: More packet flags
                 await peer.SendAsync(0, memory, ENetPacketFlags.Reliable);
+
+                if (packet is not MapChunk)
+                    Logger.LogTrace("#{0}: Sent {1} ({2})\n{3}", Id, packet.GetType().Name, packet.Id, HexDump.Create(memory.Span).TrimEnd());
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "#{0} Failed to send packet {1}", Id, packet.GetType());
+                Logger.LogError(ex, "#{0} Failed to send {1}", Id, packet.GetType().Name);
                 throw;
             }
             finally
