@@ -10,4 +10,8 @@ obj/
 # Map files
 *.vxl
 
+# Logs and configs
+logs/
+config.toml
+
 !SharpSpades.Vxl
