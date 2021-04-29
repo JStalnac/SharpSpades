@@ -29,7 +29,7 @@ namespace SharpSpades
         public ILogger<Server> Logger { get; }
         public string RootDirectory { get; }
         public ConcurrentDictionary<ENetAsyncPeer, Client> Clients { get; } = new();
-        public Map? Map { get; private set; }
+        public IWorld? World { get; private set; }
 
         private volatile bool started;
 
@@ -263,8 +263,9 @@ namespace SharpSpades
 
         private void LoadMap(string name)
         {
+            // Bad
             using (var fs = new FileStream(name, FileMode.Open))
-                Map = Map.Load(fs);
+                World = new World(Map.Load(fs));
         }
 
         internal static byte GetFreeId(byte[] inUse)

@@ -1,13 +1,16 @@
 ﻿using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 
+#nullable enable
+
 namespace SharpSpades.Api
 {
     public interface IServer
     {
-        public ILogger<T> GetLogger<T>();
-        public ILogger GetLogger(string categoryName);
-        public Task StartAsync();
-        public Task StopAsync();
+        IWorld? World { get; }
+        ILogger<T> GetLogger<T>();
+        ILogger GetLogger(string categoryName);
+        Task StartAsync();
+        Task StopAsync();
     }
 }

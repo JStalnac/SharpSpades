@@ -1,8 +1,8 @@
 ﻿using ENet.Managed;
 using ENet.Managed.Async;
 using Microsoft.Extensions.Logging;
-using Serilog.Events;
 using SharpSpades.Api;
+using SharpSpades.Api.Entities;
 using SharpSpades.Api.Net;
 using SharpSpades.Api.Net.Packets;
 using SharpSpades.Api.Net.Packets.State;
@@ -110,7 +110,7 @@ namespace SharpSpades
             // 8 kb
             const int ChunkSize = 8192;
 
-            Map map = ((Server)Server).Map!;
+            Map map = ((Server)Server).World!.Map;
 
             int dataLength = map.RawData.Length;
             ReadOnlyMemory<byte> data = map.RawData.AsMemory();
