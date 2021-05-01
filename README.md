@@ -19,3 +19,5 @@ Feel free to send us a PR or create an issue if you find any problems!
 `SharpSpades.Cli` - A CLI for starting (and managing?) servers
 
 `SharpSpades.Tests` - Tests
+
+`SharpSpades.Vxl` - A map library for AoS
