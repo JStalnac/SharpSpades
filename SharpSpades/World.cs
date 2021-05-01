@@ -1,14 +1,12 @@
-﻿using SharpSpades.Api;
-using SharpSpades.Api.Entities;
-using SharpSpades.Api.Utils;
-using SharpSpades.Entities;
+﻿using SharpSpades.Entities;
+using SharpSpades.Utils;
 using SharpSpades.Vxl;
 using System;
 using System.Collections.Generic;
 
 namespace SharpSpades
 {
-    public class World : IWorld
+    public class World
     {
         public Map Map { get; }
 
@@ -21,7 +19,7 @@ namespace SharpSpades
             Map = map;
         }
 
-        public void AddEntity(IEntity entity)
+        public void AddEntity(Entity entity)
         {
             Throw.IfNull(entity);
 
@@ -35,7 +33,7 @@ namespace SharpSpades
             }
         }
 
-        public void RemoveEntity(IEntity entity)
+        public void RemoveEntity(Entity entity)
         {
             if (entity is not Entity e)
                 throw new ArgumentException("Invalid entity");

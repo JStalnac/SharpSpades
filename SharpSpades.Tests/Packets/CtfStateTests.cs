@@ -1,6 +1,6 @@
 ﻿using NUnit.Framework;
-using SharpSpades.Api.Net.Packets.State;
-using SharpSpades.Api.Utils;
+using SharpSpades.Net.Packets.State;
+using SharpSpades.Utils;
 using System;
 using System.Numerics;
 

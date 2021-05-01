@@ -1,16 +1,15 @@
-﻿using SharpSpades.Api.Entities;
-using SharpSpades.Api.Net;
+﻿using SharpSpades.Net;
 using System.Threading.Tasks;
 
 namespace SharpSpades.Entities
 {
-    public class Player : Entity, IPlayer
+    public class Player : Entity
     {
         public string Name { get; internal set; }
         public bool IsAlive { get; private set; }
-        public IClient Client { get; internal set; }
+        public Client Client { get; internal set; }
 
-        internal Player(IClient client)
+        internal Player(Client client)
         {
             Client = client;
         }

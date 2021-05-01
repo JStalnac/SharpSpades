@@ -1,5 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
-using SharpSpades.Api.Events;
+using SharpSpades.Events;
 using System;
 using System.Threading.Tasks;
 

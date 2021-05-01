@@ -5,8 +5,8 @@ using Microsoft.Extensions.Logging;
 using Nett;
 using Serilog;
 using Serilog.Events;
-using SharpSpades.Api;
-using SharpSpades.Api.Utils;
+using SharpSpades.Net;
+using SharpSpades.Utils;
 using SharpSpades.Vxl;
 using System;
 using System.Collections.Concurrent;
@@ -21,7 +21,7 @@ using System.Threading.Tasks;
 
 namespace SharpSpades
 {
-    public class Server : IServer
+    public class Server
     {
         public readonly CancellationTokenSource cts = new();
         public IConfigurationRoot Configuration { get; }
@@ -29,7 +29,7 @@ namespace SharpSpades
         public ILogger<Server> Logger { get; }
         public string RootDirectory { get; }
         public ConcurrentDictionary<ENetAsyncPeer, Client> Clients { get; } = new();
-        public IWorld? World { get; private set; }
+        public World? World { get; private set; }
 
         private volatile bool started;
 
