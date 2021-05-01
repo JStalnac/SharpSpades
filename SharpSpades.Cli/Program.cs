@@ -3,7 +3,7 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 
-namespace SharpSpades
+namespace SharpSpades.Cli
 {
     class Program
     {

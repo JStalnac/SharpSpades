@@ -16,7 +16,6 @@
   <ItemGroup>
     <ProjectReference Include="..\SharpSpades.Vxl\SharpSpades.Vxl.csproj" />
     <ProjectReference Include="..\SharpSpades\SharpSpades.csproj" />
-    <ProjectReference Include="..\SharpSpades.Api\SharpSpades.Api.csproj" />
   </ItemGroup>
 
 </Project>
