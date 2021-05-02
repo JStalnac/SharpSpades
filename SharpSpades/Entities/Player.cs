@@ -5,8 +5,8 @@ namespace SharpSpades.Entities
 {
     public class Player : Entity
     {
-        public string Name { get; internal set; }
-        public bool IsAlive { get; private set; }
+        public string Name { get; internal init; } // TODO: Make setter public?
+        public bool IsAlive { get; internal set; }
         public Client Client { get; internal set; }
 
         internal Player(Client client)

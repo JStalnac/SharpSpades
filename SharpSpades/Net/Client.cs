@@ -2,7 +2,6 @@
 using ENet.Managed.Async;
 using Microsoft.Extensions.Logging;
 using SharpSpades.Entities;
-using SharpSpades.Net;
 using SharpSpades.Net.Packets;
 using SharpSpades.Net.Packets.State;
 using SharpSpades.Utils;
@@ -52,21 +51,30 @@ namespace SharpSpades.Net
                 cts.Cancel();
             });
 
-            await peer.Connection;
-
-            // NOTE: Maybe not needed
-            if (!peer.IsConnected)
-                return;
-
-            Logger.LogInformation("#{0}: Connected", Id);
-
-            var cancellationToken = cts.Token;
-
-            Logger.LogDebug("Sending map data to #{0}", Id);
-            await SendMap();
-            
             try
-            {
+            {     
+                await peer.Connection;
+
+                Logger.LogInformation("#{0}: Connected", Id);
+
+                var cancellationToken = cts.Token;
+           
+                Logger.LogDebug("Sending map data to #{0}", Id);
+                await SendMap();
+                Logger.LogDebug("Done sending map data to #{0}", Id);
+
+                await SendPlayers();
+                
+                // Send state
+                await SendPacket(new StateData
+                {
+                    PlayerId = Id,
+                    BlueColor = Color.Blue,
+                    GreenColor = Color.Green,
+                    FogColor = Color.HotPink,
+                    State = new CtfState()
+                });
+
                 while (!cts.IsCancellationRequested && peer.IsConnected)
                 {
                     using var rawPacket = await peer.ReceiveAsync(cancellationToken);
@@ -74,13 +82,17 @@ namespace SharpSpades.Net
                     // Process packet
                     byte packetId = rawPacket.Data.Span[0];
                     
+                    // Movement packets
+                    if (packetId == 0 || packetId == 1 || packetId == 3)
+                        continue;
+
                     if (packets.TryGetValue(packetId, out var packet))
                     {
                         Logger.LogTrace("#{0}: Received {1} ({2})\n{3}", Id, packet.GetType().Name, packetId, HexDump.Create(rawPacket.Data.Span).TrimEnd());
 
                         try
                         {
-                            packet.Read(rawPacket.Data.Span);
+                            packet.Read(rawPacket.Data.Span.Slice(1));
                             await packet.HandleAsync(this);
                         }
                         catch (Exception ex)
@@ -132,16 +144,29 @@ namespace SharpSpades.Net
                 
                 data = data.Slice(start: count);
             } while (data.Length > 0);
+        }
 
-            // Send state
-            await SendPacket(new StateData
+        private async Task SendPlayers()
+        {
+            var random = new Random();
+            foreach (var client in Server.Clients.Values)
             {
-                PlayerId = Id,
-                BlueColor = Color.Blue,
-                GreenColor = Color.Green,
-                FogColor = Color.HotPink,
-                State = new CtfState()
-            });
+                // WIP
+                
+                // if (client.Player is not null)
+                // {
+                    await SendPacket(new ExistingPlayer
+                    {
+                        PlayerId = 1,
+                        Team = TeamType.Blue,
+                        Weapon = WeaponType.Rifle,
+                        HeldItem = 2,
+                        Kills = 0,
+                        Color = Color.FromArgb(random.Next()),
+                        Name = $"Deuce {client.Id}"
+                    });
+                // }
+            }
         }
 
         public async ValueTask SendPacket(IPacket packet)
@@ -155,7 +180,7 @@ namespace SharpSpades.Net
 
             // Limit the length of the buffer
             Memory<byte> memory = ((Memory<byte>)buffer).Slice(0, length);
-            
+
             try
             {
                 try
