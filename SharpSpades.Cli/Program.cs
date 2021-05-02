@@ -10,8 +10,6 @@ namespace SharpSpades.Cli
     {
         static async Task Main(string[] args)
         {
-            var packet = (Packet) new CreatePlayer();
-            
             try
             {
                 var server = new Server(Directory.GetCurrentDirectory());
