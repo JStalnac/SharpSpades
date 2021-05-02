@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace SharpSpades.Net.Packets
 {
-    public abstract class IPacket
+    public interface IPacket
     {
         /// <summary>
         /// The id of the packet.
