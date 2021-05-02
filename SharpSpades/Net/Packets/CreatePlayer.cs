@@ -5,11 +5,11 @@ using System.Threading.Tasks;
 
 namespace SharpSpades.Net.Packets
 {
-    public class CreatePlayer : IPacket
+    public class CreatePlayer : Packet
     {
-        public byte Id => 12;
+        public override byte Id => 12;
 
-        public int Length => 1 + 1 + 1 + 12 + Name.Length;
+        public override int Length => 1 + 1 + 1 + 12 + Name.Length;
 
         public byte PlayerId { get; init; }
         public WeaponType Weapon { get; init; }
@@ -18,10 +18,10 @@ namespace SharpSpades.Net.Packets
         // TODO: Validate name
         public string Name { get; init; }
 
-        public void Read(ReadOnlySpan<byte> buffer)
+        internal override void Read(ReadOnlySpan<byte> buffer)
             => throw new NotImplementedException();
 
-        public void WriteTo(Span<byte> buffer)
+        internal override void WriteTo(Span<byte> buffer)
         {
             buffer[0] = PlayerId;
             buffer[1] = (byte)Weapon;
@@ -32,7 +32,7 @@ namespace SharpSpades.Net.Packets
             name.CopyTo(buffer.Slice(15));
         }
 
-        public Task HandleAsync(Client client)
+        internal override Task HandleAsync(Client client)
             => Task.CompletedTask;
     }
 }

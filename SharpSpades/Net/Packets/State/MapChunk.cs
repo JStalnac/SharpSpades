@@ -3,13 +3,13 @@ using System.Threading.Tasks;
 
 namespace SharpSpades.Net.Packets.State
 {
-    public sealed class MapChunk : IPacket
+    public sealed class MapChunk : Packet
     {
-        public byte Id => 19;
+        public override byte Id => 19;
+        
+        public override int Length => MapData.Length;
 
         public ReadOnlyMemory<byte> MapData { get; init; }
-
-        public int Length => MapData.Length;
 
         public MapChunk() { }
 
@@ -18,15 +18,15 @@ namespace SharpSpades.Net.Packets.State
             MapData = mapData;
         }
 
-        public void Read(ReadOnlySpan<byte> buffer)
+        internal override void Read(ReadOnlySpan<byte> buffer)
             => throw new NotImplementedException();
 
-        public void WriteTo(Span<byte> buffer)
+        internal override void WriteTo(Span<byte> buffer)
         {
             MapData.Span.CopyTo(buffer);
         }
 
-        public Task HandleAsync(Client client)
+        internal override Task HandleAsync(Client client)
             => Task.CompletedTask;
     }
 }

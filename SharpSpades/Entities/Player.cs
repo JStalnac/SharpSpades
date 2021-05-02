@@ -7,7 +7,7 @@ namespace SharpSpades.Entities
     {
         public string Name { get; internal init; } // TODO: Make setter public?
         public bool IsAlive { get; internal set; }
-        public Client Client { get; internal set; }
+        internal Client Client { get; set; }
 
         internal Player(Client client)
         {

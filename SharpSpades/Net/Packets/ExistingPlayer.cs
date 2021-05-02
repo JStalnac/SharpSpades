@@ -2,16 +2,15 @@
 using SharpSpades.Utils;
 using System;
 using System.Drawing;
-using System.Numerics;
 using System.Threading.Tasks;
 
 namespace SharpSpades.Net.Packets
 {
-    public class ExistingPlayer : IPacket
+    public class ExistingPlayer : Packet
     {
-        public byte Id => 9;
+        public override byte Id => 9;
 
-        public int Length => 11 + Name.Length;
+        public override int Length => 11 + Name.Length;
 
         public byte PlayerId { get; set; }
         public TeamType Team { get; set; }
@@ -21,7 +20,7 @@ namespace SharpSpades.Net.Packets
         public Color Color { get; set; }
         public string Name { get; set; }
 
-        public void Read(ReadOnlySpan<byte> buffer)
+        internal override void Read(ReadOnlySpan<byte> buffer)
         {
             PlayerId = buffer[0];
             Team = (TeamType)buffer[1];
@@ -35,7 +34,7 @@ namespace SharpSpades.Net.Packets
             Name = StringUtils.ReadCP437String(buffer.Slice(12));
         }
 
-        public void WriteTo(Span<byte> buffer)
+        internal override void WriteTo(Span<byte> buffer)
         {
             buffer[0] = PlayerId;
             buffer[1] = (byte)Team;
@@ -46,7 +45,7 @@ namespace SharpSpades.Net.Packets
             StringUtils.ToCP437String(Name).AsSpan().CopyTo(buffer.Slice(11));
         }
 
-        public async Task HandleAsync(Client client)
+        internal override async Task HandleAsync(Client client)
         {
             client.Server.World.AddEntity(new Player(client)
             {

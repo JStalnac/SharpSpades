@@ -5,12 +5,12 @@ using System.Threading.Tasks;
 
 namespace SharpSpades.Net.Packets.State
 {
-    public sealed class StateData : IPacket
+    public sealed class StateData : Packet
     {
-        public byte Id => 15;
+        public override byte Id => 15;
 
         // Player Id, Gamemode Id, 3 * Color, 2 * Name
-        public int Length => 1 + 1 + 3 * 3 + 2 * 10 + (int)State?.Length;
+        public override int Length => 1 + 1 + 3 * 3 + 2 * 10 + (int)State?.Length;
 
         /// <summary>
         /// The id of the player.
@@ -74,10 +74,10 @@ namespace SharpSpades.Net.Packets.State
             GreenName = greenName;
         }
 
-        public void Read(ReadOnlySpan<byte> buffer)
+        internal override void Read(ReadOnlySpan<byte> buffer)
             => throw new NotImplementedException();
 
-        public void WriteTo(Span<byte> buffer)
+        internal override void WriteTo(Span<byte> buffer)
         {
             if (State is null)
                 throw new InvalidOperationException("State cannot be null");
@@ -108,7 +108,7 @@ namespace SharpSpades.Net.Packets.State
             }
         }
 
-        public Task HandleAsync(Client client)
+        internal override Task HandleAsync(Client client)
             => Task.CompletedTask;
     }
 }

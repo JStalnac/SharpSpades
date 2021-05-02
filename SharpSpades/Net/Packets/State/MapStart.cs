@@ -4,13 +4,13 @@ using System.Threading.Tasks;
 
 namespace SharpSpades.Net.Packets.State
 {
-    public sealed class MapStart : IPacket
+    public sealed class MapStart : Packet
     {
-        public byte Id => 18;
+        public override byte Id => 18;
+        
+        public override int Length => sizeof(uint);
 
         public uint MapSize { get; init; }
-
-        public int Length => sizeof(uint);
 
         public MapStart() { }
 
@@ -19,15 +19,15 @@ namespace SharpSpades.Net.Packets.State
             MapSize = mapSize;
         }
 
-        public void Read(ReadOnlySpan<byte> buffer)
+        internal override void Read(ReadOnlySpan<byte> buffer)
             => throw new NotImplementedException();
 
-        public void WriteTo(Span<byte> buffer)
+        internal override void WriteTo(Span<byte> buffer)
         {
             buffer.WriteUInt32LittleEndian(MapSize);
         }
 
-        public Task HandleAsync(Client client)
+        internal override Task HandleAsync(Client client)
             => Task.CompletedTask;
     }
 }

@@ -28,7 +28,7 @@ namespace SharpSpades.Net
         private readonly TaskCompletionSource<bool> DisconnectCompletionSource = new();
         private readonly CancellationTokenSource cts = new();
         private readonly ENetAsyncPeer peer;
-        private readonly Dictionary<byte, IPacket> packets = new();
+        private readonly Dictionary<byte, Packet> packets = new();
         
         public Client(Server server, ENetAsyncPeer peer, byte id)
         {
@@ -152,7 +152,7 @@ namespace SharpSpades.Net
             foreach (var client in Server.Clients.Values)
             {
                 // WIP
-                
+
                 // if (client.Player is not null)
                 // {
                     await SendPacket(new ExistingPlayer
@@ -169,7 +169,7 @@ namespace SharpSpades.Net
             }
         }
 
-        public async ValueTask SendPacket(IPacket packet)
+        public async ValueTask SendPacket(Packet packet)
         {
             Throw.IfNull(packet, nameof(packet));
 
@@ -222,7 +222,7 @@ namespace SharpSpades.Net
         {
             AddPacket(new ExistingPlayer());
 
-            void AddPacket(IPacket packet)
+            void AddPacket(Packet packet)
             {
                 packets.Add(packet.Id, packet);
             }
