@@ -1,4 +1,5 @@
 ﻿using ENet.Managed;
+using SharpSpades.Net.Packets;
 using System;
 using System.IO;
 using System.Threading.Tasks;
@@ -9,6 +10,8 @@ namespace SharpSpades.Cli
     {
         static async Task Main(string[] args)
         {
+            var packet = (Packet) new CreatePlayer();
+            
             try
             {
                 var server = new Server(Directory.GetCurrentDirectory());
