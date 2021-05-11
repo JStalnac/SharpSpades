@@ -186,7 +186,7 @@ namespace SharpSpades.Net
                 try
                 {
                     memory.Span[0] = packet.Id;
-                    packet.WriteTo(memory.Span.Slice(1));
+                    packet.Write(memory.Span.Slice(1));
                 }
                 catch (Exception ex)
                 {

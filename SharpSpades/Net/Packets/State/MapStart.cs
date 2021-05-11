@@ -1,30 +1,23 @@
-﻿using SharpSpades.Utils;
-using System;
+﻿using SharpSpades.Net.Packets.Attributes;
 using System.Threading.Tasks;
 
 namespace SharpSpades.Net.Packets.State
 {
-    public sealed class MapStart : Packet
+    [WriteOnly]
+    public sealed partial class MapStart : Packet
     {
         public override byte Id => 18;
         
         public override int Length => sizeof(uint);
 
-        public uint MapSize { get; init; }
+        [Field(0)]
+        public uint MapSize { get; set; }
 
         public MapStart() { }
 
         public MapStart(uint mapSize)
         {
             MapSize = mapSize;
-        }
-
-        internal override void Read(ReadOnlySpan<byte> buffer)
-            => throw new NotImplementedException();
-
-        internal override void WriteTo(Span<byte> buffer)
-        {
-            buffer.WriteUInt32LittleEndian(MapSize);
         }
 
         internal override Task HandleAsync(Client client)

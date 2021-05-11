@@ -77,7 +77,7 @@ namespace SharpSpades.Net.Packets.State
         internal override void Read(ReadOnlySpan<byte> buffer)
             => throw new NotImplementedException();
 
-        internal override void WriteTo(Span<byte> buffer)
+        internal override void Write(Span<byte> buffer)
         {
             if (State is null)
                 throw new InvalidOperationException("State cannot be null");

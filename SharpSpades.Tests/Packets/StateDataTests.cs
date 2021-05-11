@@ -47,7 +47,7 @@ namespace SharpSpades.Tests.Packets
             };
             Span<byte> buffer = new byte[packet.Length];
             buffer.Fill(0x1);
-            packet.WriteTo(buffer);
+            packet.Write(buffer);
 
             byte[] expected = new byte[]
             {

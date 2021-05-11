@@ -23,7 +23,7 @@ namespace SharpSpades.Net.Packets
         /// Writes the packet data to the buffer.
         /// </summary>
         /// <param name="buffer">A buffer with the length specified in <see cref="Length"/>.</param>
-        internal abstract void WriteTo(Span<byte> buffer);
+        internal abstract void Write(Span<byte> buffer);
         internal abstract Task HandleAsync(Client client);
     }
 }

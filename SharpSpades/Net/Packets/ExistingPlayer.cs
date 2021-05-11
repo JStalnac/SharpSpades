@@ -1,49 +1,34 @@
 ﻿using SharpSpades.Entities;
-using SharpSpades.Utils;
-using System;
+using SharpSpades.Net.Packets.Attributes;
 using System.Drawing;
 using System.Threading.Tasks;
 
 namespace SharpSpades.Net.Packets
 {
-    public class ExistingPlayer : Packet
+    public partial class ExistingPlayer : Packet
     {
         public override byte Id => 9;
 
         public override int Length => 11 + Name.Length;
 
+        [Field(0)]
         public byte PlayerId { get; set; }
+        [Field(1)]
+        [ActualType(typeof(byte))]
         public TeamType Team { get; set; }
+        [Field(2)]
+        [ActualType(typeof(byte))]
         public WeaponType Weapon { get; set; }
+        [Field(3)]
         public byte HeldItem { get; set; }
+        [Field(4)]
         public uint Kills { get; set; }
+        [Field(5)]
         public Color Color { get; set; }
+        [Field(6)]
+        [Length(16)]
+        // TODO: Validate name
         public string Name { get; set; }
-
-        internal override void Read(ReadOnlySpan<byte> buffer)
-        {
-            PlayerId = buffer[0];
-            Team = (TeamType)buffer[1];
-            Weapon = (WeaponType)buffer[2];
-            HeldItem = buffer[3];
-
-            Kills = buffer.ReadUInt32LittleEndian(4);
-            Color = buffer.ReadColor(9);
-
-            // TODO: Check if name is invalid
-            Name = StringUtils.ReadCP437String(buffer.Slice(12));
-        }
-
-        internal override void WriteTo(Span<byte> buffer)
-        {
-            buffer[0] = PlayerId;
-            buffer[1] = (byte)Team;
-            buffer[2] = (byte)Weapon;
-            buffer[3] = HeldItem;
-            buffer.WriteUInt32LittleEndian(Kills, 4);
-            buffer.WriteColor(Color, 8);
-            StringUtils.ToCP437String(Name).AsSpan().CopyTo(buffer.Slice(11));
-        }
 
         internal override async Task HandleAsync(Client client)
         {
