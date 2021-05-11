@@ -9,7 +9,7 @@ namespace SharpSpades.Net.Packets
     {
         public override byte Id => 9;
 
-        public override int Length => 11 + Name.Length;
+        public override int Length => 11 + 16;
 
         [Field(0)]
         public byte PlayerId { get; set; }
