@@ -20,11 +20,27 @@ namespace SharpSpades.Net
     public class Client
     {
         public byte Id { get; }
+        
+        public string? Name
+        {
+            get => name;
+            internal set
+            {
+                Throw.IfNull(value);
+
+                if (name is not null)
+                    throw new InvalidOperationException("The name is already set");
+                
+                name = value;
+            }
+        }
+        
         public Server Server { get; }
         public Player? Player { get; internal set; }
         internal event Action<ENetAsyncPeer>? Disconnected;
         private ILogger Logger { get; }
 
+        private string? name = null;
         private readonly TaskCompletionSource<bool> DisconnectCompletionSource = new();
         private readonly CancellationTokenSource cts = new();
         private readonly ENetAsyncPeer peer;

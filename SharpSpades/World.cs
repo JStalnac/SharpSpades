@@ -1,7 +1,6 @@
 ﻿using SharpSpades.Entities;
 using SharpSpades.Utils;
 using SharpSpades.Vxl;
-using System;
 using System.Collections.Generic;
 
 namespace SharpSpades
@@ -23,25 +22,19 @@ namespace SharpSpades
         {
             Throw.IfNull(entity);
 
-            if (entity is not Entity e)
-                throw new ArgumentException("Invalid entity");
-
             lock(entityLock)
             {
-                Entities.Add(e);
-                e.World = this;
+                Entities.Add(entity);
+                entity.World = this;
             }
         }
 
         public void RemoveEntity(Entity entity)
         {
-            if (entity is not Entity e)
-                throw new ArgumentException("Invalid entity");
-
             lock(entityLock)
             {
                 // Should maybe set the world to null or something
-                Entities.Remove(e);
+                Entities.Remove(entity);
             }
         }
     }

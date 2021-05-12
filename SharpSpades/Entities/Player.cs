@@ -5,8 +5,7 @@ namespace SharpSpades.Entities
 {
     public class Player : Entity
     {
-        public string Name { get; internal init; } // TODO: Make setter public?
-        public bool IsAlive { get; internal set; }
+        public string Name => Client.Name;
         public Client Client { get; set; }
 
         internal Player(Client client)
@@ -16,7 +15,6 @@ namespace SharpSpades.Entities
 
         internal override Task UpdateAsync(float delta)
         {
-            
             return base.UpdateAsync(delta);
         }
     }

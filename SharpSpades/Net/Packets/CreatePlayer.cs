@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 namespace SharpSpades.Net.Packets
 {
     [WriteOnly]
-    public partial class CreatePlayer : Packet
+    public sealed partial class CreatePlayer : Packet
     {
         public override byte Id => 12;
 

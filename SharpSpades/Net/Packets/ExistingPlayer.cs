@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace SharpSpades.Net.Packets
 {
-    public partial class ExistingPlayer : Packet
+    public sealed partial class ExistingPlayer : Packet
     {
         public override byte Id => 9;
 
@@ -32,11 +32,8 @@ namespace SharpSpades.Net.Packets
 
         internal override async Task HandleAsync(Client client)
         {
-            client.Server.World.AddEntity(new Player(client)
-            {
-                Name = Name,
-                IsAlive = true
-            });
+            client.Name = Name;
+            client.Server.World.AddEntity(new Player(client));
             await client.SendPacket(this);
         }
     }
