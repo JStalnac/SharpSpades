@@ -4,7 +4,7 @@
 
 namespace SharpSpades.Utils
 {
-    public static class Throw
+    internal static class Throw
     {
         public static void IfNull<T>(T? obj) where T : class
         {

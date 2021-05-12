@@ -30,11 +30,16 @@ namespace SharpSpades.Net
 
                 if (name is not null)
                     throw new InvalidOperationException("The name is already set");
-                
+
+                if (!NameUtils.IsValidName(value))
+                    throw new ArgumentException($"Invalid name '{value}'");
+
                 name = value;
             }
         }
         
+        public bool IsInLimbo => Name is null;
+
         public Server Server { get; }
         public Player? Player { get; internal set; }
         internal event Action<ENetAsyncPeer>? Disconnected;

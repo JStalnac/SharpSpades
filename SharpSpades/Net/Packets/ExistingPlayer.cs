@@ -1,5 +1,7 @@
 ﻿using SharpSpades.Entities;
 using SharpSpades.Net.Packets.Attributes;
+using SharpSpades.Utils;
+using System;
 using System.Drawing;
 using System.Threading.Tasks;
 
@@ -27,8 +29,19 @@ namespace SharpSpades.Net.Packets
         public Color Color { get; set; }
         [Field(6)]
         [Length(16)]
-        // TODO: Validate name
-        public string Name { get; set; }
+        public string Name
+        {
+            get => name ?? throw new InvalidOperationException("Name must not be null");
+            set
+            {
+                Throw.IfNull(value);
+                if (!NameUtils.IsValidName(value))
+                    throw new ArgumentException("Invalid name");
+                name = value;
+            }
+        }
+
+        private string name = null;
 
         internal override async Task HandleAsync(Client client)
         {

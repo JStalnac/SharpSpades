@@ -1,4 +1,6 @@
 ﻿using SharpSpades.Net.Packets.Attributes;
+using SharpSpades.Utils;
+using System;
 using System.Numerics;
 using System.Threading.Tasks;
 
@@ -21,9 +23,20 @@ namespace SharpSpades.Net.Packets
         public TeamType Team { get; set; }
         [Field(3)]
         public Vector3 Position { get; set; }
-        // TODO: Validate name
         [Field(4)]
-        public string Name { get; set; }
+        public string Name
+        {
+            get => name ?? throw new InvalidOperationException("Name must not be null");
+            set
+            {
+                Throw.IfNull(value);
+                if (!NameUtils.IsValidName(value))
+                    throw new ArgumentException("Invalid name");
+                name = value;
+            }
+        }
+
+        private string name = null;
 
         internal override Task HandleAsync(Client client)
             => Task.CompletedTask;
