@@ -13,7 +13,7 @@ namespace SharpSpades.Utils
         {
             if (name?.Contains('\x00') ?? false)
                 return false;
-            if (name?.Length > 16)
+            if (name?.Length > 15)
                 return false;
             
             // TODO: Other restrictions?
