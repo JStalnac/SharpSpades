@@ -1,9 +1,9 @@
-using System;
-using System.Numerics;
-using NUnit.Framework;
 using SharpSpades;
 using SharpSpades.Net.Packets;
 using SharpSpades.Net.Packets.State;
+using System;
+using System.Numerics;
+using Xunit;
 
 namespace Tests
 {
@@ -24,7 +24,7 @@ namespace Tests
                 0x0, 0x4, 0x0, 0x0
             };
 
-            Assert.AreEqual(expected, buffer);
+            Assert.Equal(expected, buffer);
 
             var cp = new CreatePlayer
             {
@@ -54,7 +54,7 @@ namespace Tests
                 0x44, 0x65, 0x75, 0x63, 0x65
             };
 
-            Assert.AreEqual(expected, buffer);
+            Assert.Equal(expected, buffer);
         }
     }
 }

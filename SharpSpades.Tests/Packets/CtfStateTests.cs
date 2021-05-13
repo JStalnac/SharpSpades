@@ -1,14 +1,13 @@
-﻿using NUnit.Framework;
-using SharpSpades.Net.Packets.State;
-using SharpSpades.Utils;
+﻿using SharpSpades.Net.Packets.State;
 using System;
 using System.Numerics;
+using Xunit;
 
 namespace SharpSpades.Tests.Packets
 {
     public class CtfStateTests
     {
-        [Test]
+        [Fact]
         public void Test_Write()
         {
             var packet = new CtfState
@@ -72,10 +71,10 @@ namespace SharpSpades.Tests.Packets
                 0x00, 0x00, 0xA0, 0x41,
             };
 
-            Console.WriteLine(HexDump.Create(expected));
-            Console.WriteLine(HexDump.Create(buffer));
+            // Console.WriteLine(HexDump.Create(expected));
+            // Console.WriteLine(HexDump.Create(buffer));
 
-            Assert.AreEqual(expected, buffer.ToArray());
+            Assert.Equal(expected, buffer.ToArray());
         }
     }
 }

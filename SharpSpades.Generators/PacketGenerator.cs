@@ -44,7 +44,7 @@ namespace SharpSpades.Generators
                 if (String.IsNullOrEmpty(source))
                     continue;
 
-                context.AddSource($"{cls.Name}_Generated.cs", source);
+                context.AddSource($"{cls.Name}.g.cs", source);
             }
         }
 

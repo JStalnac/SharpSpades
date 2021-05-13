@@ -1,15 +1,14 @@
-﻿using NUnit.Framework;
-using SharpSpades.Net.Packets.State;
-using SharpSpades.Utils;
+﻿using SharpSpades.Net.Packets.State;
 using System;
 using System.Collections.Immutable;
 using System.Numerics;
+using Xunit;
 
 namespace SharpSpades.Tests.Packets
 {
     public class TcStateTests
     {
-        [Test]
+        [Fact]
         public void Test_Write()
         {
             var packet = new TcState
@@ -77,10 +76,10 @@ namespace SharpSpades.Tests.Packets
                 0x02
             };
 
-            Console.WriteLine(HexDump.Create(expected));
-            Console.WriteLine(HexDump.Create(buffer));
+            // Console.WriteLine(HexDump.Create(expected));
+            // Console.WriteLine(HexDump.Create(buffer));
 
-            Assert.AreEqual(expected, buffer.ToArray());
+            Assert.Equal(expected, buffer.ToArray());
         }
     }
 }

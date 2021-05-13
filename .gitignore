@@ -15,3 +15,5 @@ logs/
 config.toml
 
 !SharpSpades.Vxl
+
+coverage.*

@@ -1,14 +1,13 @@
-using NUnit.Framework;
 using SharpSpades.Net.Packets.State;
-using SharpSpades.Utils;
 using System;
 using System.Drawing;
+using Xunit;
 
 namespace SharpSpades.Tests.Packets
 {
     public class StateDataTests
     {
-        [Test]
+        [Fact]
         public void Test_Set_BlueName()
         {
             Assert.Throws<ArgumentOutOfRangeException>(() =>
@@ -20,7 +19,7 @@ namespace SharpSpades.Tests.Packets
             });
         }
 
-        [Test]
+        [Fact]
         public void Test_Set_GreenName()
         {
             Assert.Throws<ArgumentOutOfRangeException>(() =>
@@ -32,7 +31,7 @@ namespace SharpSpades.Tests.Packets
             });
         }
 
-        [Test]
+        [Fact]
         public void Test_Write()
         {
             var packet = new StateData
@@ -82,10 +81,10 @@ namespace SharpSpades.Tests.Packets
                 //#endregion
             };
 
-            Console.WriteLine(HexDump.Create(expected));
-            Console.WriteLine(HexDump.Create(buffer));
+            // Console.WriteLine(HexDump.Create(expected));
+            // Console.WriteLine(HexDump.Create(buffer));
 
-            Assert.AreEqual(expected, buffer.ToArray());
+            Assert.Equal(expected, buffer.ToArray());
         }
     }
 }

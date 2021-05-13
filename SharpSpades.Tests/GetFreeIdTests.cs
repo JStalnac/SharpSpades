@@ -1,32 +1,32 @@
-using NUnit.Framework;
 using System;
+using Xunit;
 
 namespace SharpSpades.Tests
 {
     public class GetFreeIdTests
     {
-        [Test]
+        [Fact]
         public void GetFreeId_NoIds()
         {
-            Assert.AreEqual(0, Server.GetFreeId(Array.Empty<byte>()));
+            Assert.Equal(0, Server.GetFreeId(Array.Empty<byte>()));
         }
 
-        [Test]
+        [Fact]
         public void GetFreeId_Test1()
         {
-            Assert.AreEqual(1, Server.GetFreeId(new byte[] { 0 }));
+            Assert.Equal(1, Server.GetFreeId(new byte[] { 0 }));
         }
 
-        [Test]
+        [Fact]
         public void GetFreeId_Test2()
         {
-            Assert.AreEqual(2, Server.GetFreeId(new byte[] { 0, 1 }));
+            Assert.Equal(2, Server.GetFreeId(new byte[] { 0, 1 }));
         }
 
-        [Test]
+        [Fact]
         public void GetFreeId_Test3()
         {
-            Assert.AreEqual(2, Server.GetFreeId(new byte[] { 0, 1, 5 }));
+            Assert.Equal(2, Server.GetFreeId(new byte[] { 0, 1, 5 }));
         }
     }
 }
