@@ -6,8 +6,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ENet.Managed\src\ENet.Managed\ENet.Managed.csproj" />
     <ProjectReference Include="..\SharpSpades\SharpSpades.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="ENet.Managed">
+      <HintPath>../lib/ENet.Managed.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
   <ItemGroup>
