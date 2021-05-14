@@ -7,11 +7,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ENet.Managed\src\ENet.Managed\ENet.Managed.csproj" />
     <ProjectReference Include="..\SharpSpades.Vxl\SharpSpades.Vxl.csproj" />
-    <ProjectReference Include="..\SharpSpades.Generators\SharpSpades.Generators.csproj"
-                      OutputItemType="Analyzer"
-                      ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\SharpSpades.Generators\SharpSpades.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Reference Include="ENet.Managed">
+      <HintPath>../lib/ENet.Managed.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
   <ItemGroup>
