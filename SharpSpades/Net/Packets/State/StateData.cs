@@ -87,9 +87,10 @@ namespace SharpSpades.Net.Packets.State
             buffer.WriteColor(BlueColor, 4);
             buffer.WriteColor(GreenColor, 7);
 
-            Span<byte> name = StringUtils.ToCP437String(BlueName);
+            Span<byte> name = BlueName.ToCP437String();
+
             name.CopyTo(buffer.Slice(10, 10));
-            name = StringUtils.ToCP437String(GreenName);
+            name = GreenName.ToCP437String();
             name.CopyTo(buffer.Slice(20, 10));
 
             if (State is CtfState ctf)
