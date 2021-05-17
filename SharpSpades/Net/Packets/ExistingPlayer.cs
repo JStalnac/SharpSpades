@@ -47,7 +47,7 @@ namespace SharpSpades.Net.Packets
         {
             client.Name = Name;
             client.Server.World.AddEntity(new Player(client));
-            await client.SendPacket(this);
+            await client.SendPacketAsync(this);
         }
     }
 }

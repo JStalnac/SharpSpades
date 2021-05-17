@@ -15,12 +15,8 @@ namespace SharpSpades.Net.Packets.State
 
         public MapStart() { }
 
-        public MapStart(uint mapSize)
-        {
-            MapSize = mapSize;
-        }
+        public MapStart(uint mapSize) => this.MapSize = mapSize;
 
-        internal override Task HandleAsync(Client client)
-            => Task.CompletedTask;
+        internal override Task HandleAsync(Client client) => Task.CompletedTask;
     }
 }

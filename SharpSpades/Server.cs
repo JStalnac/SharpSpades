@@ -24,11 +24,17 @@ namespace SharpSpades
     public class Server
     {
         public readonly CancellationTokenSource cts = new();
+
         public IConfigurationRoot Configuration { get; }
+
         public ILoggerFactory LoggerFactory { get; }
+
         public ILogger<Server> Logger { get; }
+
         public string RootDirectory { get; }
+
         public ConcurrentDictionary<ENetAsyncPeer, Client> Clients { get; } = new();
+
         public World? World { get; private set; }
 
         private volatile bool started;
@@ -38,188 +44,193 @@ namespace SharpSpades
         public Server(string configurationDirectory)
         {
             Throw.IfNull(configurationDirectory, nameof(configurationDirectory));
-            
-            RootDirectory = Path.IsPathRooted(configurationDirectory)
-                ? configurationDirectory
-                : Path.Combine(Directory.GetCurrentDirectory(), configurationDirectory);
+
+            this.RootDirectory = Path.IsPathRooted(configurationDirectory) ?
+                                 configurationDirectory :
+                                 Path.Combine(Directory.GetCurrentDirectory(), configurationDirectory);
 
             // Create the config file
-            string configFile = Path.Combine(RootDirectory, "config.toml");
+            string configFile = Path.Combine(this.RootDirectory, "config.toml");
             if (!File.Exists(configFile))
                 Toml.WriteFile<ServerConfiguration>(new(), configFile);
 
             try
             {
-                Configuration = new ConfigurationBuilder()
-                    .SetBasePath(RootDirectory)
-                    .AddTomlFile("config.toml")
-                    .Build();
+                this.Configuration = new ConfigurationBuilder().SetBasePath(this.RootDirectory)
+                                                               .AddTomlFile("config.toml")
+                                                               .Build();
             }
             catch
             {
-                Console.WriteLine($"Failed to load configuration");
+                Console.WriteLine("Failed to load configuration");
+
                 throw;
             }
 
-            LoggingConfiguration loggingConfig;
+            LoggingConfiguration? loggingConfig = null;
             try
             {
-                loggingConfig = Configuration.GetSection("LogLevels").Get<LoggingConfiguration>();
+                loggingConfig = this.Configuration.GetSection("LogLevels").Get<LoggingConfiguration>();
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Failed to load logging config. Using default logging config. Exception:\n{ex}");
+
                 loggingConfig = new();
             }
 
-            LoggerFactory = Microsoft.Extensions.Logging.LoggerFactory.Create(c =>
+            this.LoggerFactory = Microsoft.Extensions.Logging.LoggerFactory.Create(c =>
             {
-                var logger = new LoggerConfiguration()
-                    .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] [{SourceContext}] {Message:lj}{NewLine}{Exception}");
-                if (!String.IsNullOrEmpty(loggingConfig.LogFile))
+                var logger = new LoggerConfiguration().WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} " +
+                                                                                                       "{Level:u3}] [{SourceContext}] " +
+                                                                                                       "{Message:lj}{NewLine}{Exception}");
+                if (!loggingConfig.LogFile.IsNullOrEmptyOrWhiteSpace())
                 {
-                    logger.WriteTo.File(path: loggingConfig.LogFile, rollingInterval: loggingConfig.RollDaily ? RollingInterval.Day : RollingInterval.Infinite,
-                            shared: true, outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] [{SourceContext}] {Message:lj}{NewLine}{Exception}");
+                    logger.WriteTo.File(path: loggingConfig.LogFile,
+                                        rollingInterval: loggingConfig.RollDaily ? RollingInterval.Day : RollingInterval.Infinite,
+                                        shared: true,
+                                        outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] [{SourceContext}] " +
+                                                        "{Message:lj}{NewLine}{Exception}");
                 }
 
                 // Apply default log level
-                LogEventLevel level;
-                var defaultLevel = GetLevel(loggingConfig.Default);
-                if (!defaultLevel.HasValue)
-                    level = LogEventLevel.Information;
-                else
-                    level = defaultLevel.Value;
-                logger.MinimumLevel.Is(level);
+                logger.MinimumLevel.Is(GetLevel(loggingConfig.Default) ?? LogEventLevel.Information);
 
                 // Apply log level overrides
                 foreach (string s in loggingConfig.Trace)
                     logger.MinimumLevel.Override(s, LogEventLevel.Verbose);
+
                 foreach (string s in loggingConfig.Debug)
                     logger.MinimumLevel.Override(s, LogEventLevel.Debug);
+
                 foreach (string s in loggingConfig.Information)
                     logger.MinimumLevel.Override(s, LogEventLevel.Information);
+
                 foreach (string s in loggingConfig.Warning)
                     logger.MinimumLevel.Override(s, LogEventLevel.Warning);
+
                 foreach (string s in loggingConfig.Error)
                     logger.MinimumLevel.Override(s, LogEventLevel.Error);
+
                 foreach (string s in loggingConfig.Fatal)
                     logger.MinimumLevel.Override(s, LogEventLevel.Fatal);
 
                 c.AddSerilog(logger.CreateLogger(), true);
             });
-            
-            Logger = LoggerFactory.CreateLogger<Server>();
+
+            this.Logger = this.LoggerFactory.CreateLogger<Server>();
         }
 
         public ILogger<T> GetLogger<T>()
-            => LoggerFactory.CreateLogger<T>();
+            => this.LoggerFactory.CreateLogger<T>();
 
         public Microsoft.Extensions.Logging.ILogger GetLogger(string categoryName)
-            => LoggerFactory.CreateLogger(categoryName);
+            => this.LoggerFactory.CreateLogger(categoryName);
 
         public async Task StartAsync()
         {
             if (started)
                 throw new InvalidOperationException("The server is already running");
+
             started = true;
 
             // Get port
             ushort port;
             try
             {
-                port = Configuration.GetValue<ushort>("Port", 32887);
+                port = this.Configuration.GetValue<ushort>("Port", 32887);
             }
             catch (Exception)
             {
                 port = 32887;
             }
 
-            Logger.LogInformation("Loading");
+            this.Logger.LogInformation("Loading");
 
-            Stopwatch sw = new();
+            var sw = new Stopwatch();
 
             // Load the map
-            Logger.LogInformation("Loading map...");
-
-            string mapName = Configuration["MapName"] ?? "classicgen.vxl";
+            this.Logger.LogInformation("Loading map...");
 
             sw.Start();
-            await Task.Run(() => LoadMap(mapName));
+            await Task.Run(() => this.LoadMap(this.Configuration["MapName"] ?? "classicgen.vxl"));
             sw.Stop();
 
-            Logger.LogInformation("Loaded map (Took {0:0.00} s)", sw.Elapsed.TotalSeconds);
-            
+            this.Logger.LogInformation("Loaded map (Took {0:0.00} s)", sw.Elapsed.TotalSeconds);
+
             // Load ENet
             if (!ManagedENet.Started)
             {
-                Logger.LogInformation("Loading ENet libraries...");
+                this.Logger.LogInformation("Loading ENet libraries...");
+
                 ManagedENet.Startup();
             }
 
-            var listenEndPoint = new IPEndPoint(IPAddress.Loopback, port);
-
             // Create host
-            Logger.LogDebug("Creating host...");
-            ENetAsyncHost host;
+            this.Logger.LogDebug("Creating host...");
+
+            ENetAsyncHost? host = null;
             try
             {
-                host = new ENetAsyncHost(listenEndPoint, MaxPlayers, 1);
+                host = new ENetAsyncHost(new IPEndPoint(IPAddress.Loopback, port), MaxPlayers, 1);
             }
-            catch (NullReferenceException)
+            catch (NullReferenceException ex)
             {
-                Logger.LogCritical("Failed to initialize ENet. Is the library initialized?");
+                this.Logger.LogCritical(ex, "Failed to initialize ENet. Is the library initialized?");
+
                 return;
             }
             catch (Exception ex)
             {
-                Logger.LogCritical(ex, "Failed to create host");
+                this.Logger.LogCritical(ex, "Failed to create host");
+
                 return;
             }
-            
+
             // Important for the clients to be able to connect
             host.CompressWithRangeCoder();
 
-            Logger.LogInformation("Starting host");
+            this.Logger.LogInformation("Starting host");
             await host.StartAsync();
-            
-            Logger.LogInformation("Ready");
-            Logger.LogDebug($"Listening on port {port}");
+
+            this.Logger.LogInformation("Ready");
+            this.Logger.LogDebug($"Listening on port {port}");
 
             try
             {
                 while (!cts.IsCancellationRequested)
                 {
                     var peer = await host.AcceptAsync(cts.Token);
-                    
+
                     // Only v0.75 is supported
                     if (peer.ConnectData != 3)
                     {
                         await peer.DisconnectAsync((uint)DisconnectReason.WrongProtocolVersion);
-                        Logger.LogInformation($"A client tried to connect with unsupported protocol version: {peer.ConnectData}");
+                        this.Logger.LogInformation($"A client tried to connect with unsupported protocol version: {peer.ConnectData}");
+
                         return;
                     }
 
-                    if (Clients.Count >= MaxPlayers)
+                    if (this.Clients.Count >= MaxPlayers)
                     {
                         await peer.DisconnectAsync((uint)DisconnectReason.ServerFull);
-                        Logger.LogInformation("A client tried to connect but the server was full.");
+                        this.Logger.LogInformation("A client tried to connect but the server was full.");
+
                         return;
                     }
 
-                    Logger.LogInformation($"Client connected: {peer.RemoteEndPoint}");
-                    
-                    byte id = GetFreeId(Clients.Select(c => c.Value.Id).ToArray());
-                    
-                    var client = new Client(this, peer, id);
-                    client.Disconnected += p => Clients.TryRemove(p, out _);
-                    Clients.TryAdd(peer, client);
-                    _ = Task.Run(client.StartAsync)
-                        .ContinueWith(t =>
-                        {
-                            Logger.LogError(t.Exception, "An exception occured in a client thread");
-                        }, TaskContinuationOptions.OnlyOnFaulted);
+                    this.Logger.LogInformation($"Client connected: {peer.RemoteEndPoint}");
 
-                    Logger.LogDebug("Clients connected: {0}", Clients.Count);
+                    var client = new Client(this, peer, GetFreeId(this.Clients.Select(c => c.Value.Id).ToArray()));
+                    client.Disconnected += p => this.Clients.TryRemove(p, out _);
+
+                    this.Clients.TryAdd(peer, client);
+
+                    _ = Task.Run(client.StartAsync).ContinueWith(t =>
+                            this.Logger.LogError(t.Exception, "An exception occured in a client thread"),
+                            TaskContinuationOptions.OnlyOnFaulted);
+
+                    this.Logger.LogDebug("Clients connected: {0}", this.Clients.Count);
                 }
             }
             catch (OperationCanceledException)
@@ -228,7 +239,7 @@ namespace SharpSpades
             }
             catch (Exception ex)
             {
-                Logger.LogCritical(ex, "Network loop threw an unhandled exception");
+                this.Logger.LogCritical(ex, "Network loop threw an unhandled exception");
             }
             finally
             {
@@ -236,19 +247,19 @@ namespace SharpSpades
                     cts.Cancel();
 
                 // TODO: Disconnect clients
-                
-                Logger.LogDebug("Stopping host");
+
+                this.Logger.LogDebug("Stopping host");
                 await host.FlushAsync();
-                Logger.LogDebug("All packets flushed");
+                this.Logger.LogDebug("All packets flushed");
 
                 await host.StopAsync();
 
-                Logger.LogDebug("Host stopped");
+                this.Logger.LogDebug("Host stopped");
 
-                Logger.LogTrace("Disposing host");
+                this.Logger.LogTrace("Disposing host");
                 host.Dispose();
 
-                Logger.LogInformation("Server stopped");
+                this.Logger.LogInformation("Server stopped");
             }
         }
 
@@ -256,8 +267,11 @@ namespace SharpSpades
         {
             if (cts.IsCancellationRequested)
                 return;
-            Logger.LogInformation("Stopping server");
+
+            this.Logger.LogInformation("Stopping server");
+
             cts.Cancel();
+
             await Task.CompletedTask;
         }
 
@@ -265,22 +279,18 @@ namespace SharpSpades
         {
             // Bad
             using (var fs = new FileStream(name, FileMode.Open))
-                World = new World(Map.Load(fs));
+                this.World = new World(Map.Load(fs));
         }
 
         internal static byte GetFreeId(byte[] inUse)
         {
-            if (inUse.Length == 0)
+            if (inUse.Length is 0)
                 return 0;
 
-            byte[] ids = inUse.OrderBy(x => x)
-                .ToArray();
             byte id = 0;
 
-            for (int i = 0; i < inUse.Length; i++)
+            foreach (var lowest in inUse)
             {
-                byte lowest = inUse[i];
-
                 for (; id <= lowest; id++)
                 {
                     if (id != lowest)
@@ -292,7 +302,7 @@ namespace SharpSpades
 
         private static LogEventLevel? GetLevel(string level)
         {
-            return level switch
+            return level.ToLower() switch
             {
                 "trace" or "verbose" => LogEventLevel.Verbose,
                 "debug" => LogEventLevel.Debug,

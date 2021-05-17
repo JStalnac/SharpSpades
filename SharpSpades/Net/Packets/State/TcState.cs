@@ -7,9 +7,9 @@ namespace SharpSpades.Net.Packets.State
 {
     public sealed class TcState : IGameState
     {
-        const int MaxTerritories = 16;
+        private const int MaxTerritories = 16;
 
-        public int Length => 1 + territories.Length * 13;
+        public int Length => 1 + (territories.Length * 13);
 
         private ImmutableArray<Territory> territories = ImmutableArray<Territory>.Empty;
 
@@ -18,8 +18,7 @@ namespace SharpSpades.Net.Packets.State
             get => territories;
             init
             {
-                if (value.Length > MaxTerritories)
-                    throw new ArgumentOutOfRangeException("Maximum number of territories is 16");
+                Throw.If(value.Length, x => x > MaxTerritories, new ArgumentOutOfRangeException(nameof(value.Length), "Maximum number of territories is 16"));
 
                 territories = value;
             }
@@ -27,13 +26,15 @@ namespace SharpSpades.Net.Packets.State
 
         public void WriteTo(Span<byte> buffer)
         {
-            buffer[0] = (byte)Territories.Length;
-            Span<byte> span = buffer.Slice(1);
+            buffer[0] = (byte)this.Territories.Length;
+            
+            Span<byte> span = buffer[1..];
+
             foreach (var t in territories)
             {
                 span.WritePosition(t.Position);
                 span[12] = (byte)t.State;
-                span = span.Slice(13);
+                span = span[13..];
             }
         }
     }

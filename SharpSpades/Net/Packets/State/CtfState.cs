@@ -9,35 +9,35 @@ namespace SharpSpades.Net.Packets.State
         public int Length => 52;
 
         public byte BlueScore { get; init; }
+
         public byte GreenScore { get; init; }
+
         public byte CaptureLimit { get; init; }
 
         public bool BlueHasIntel { get; init; }
+
         public bool GreenHasIntel { get; init; }
 
         public IntelLocation BlueIntel { get; init; }
+
         public IntelLocation GreenIntel { get; init; }
 
         public Vector3 BlueBasePosition { get; init; }
+
         public Vector3 GreenBasePosition { get; init; }
 
         public void WriteTo(Span<byte> buffer)
         {
-            buffer[0] = BlueScore;
-            buffer[1] = GreenScore;
-            buffer[2] = CaptureLimit;
+            buffer[0] = this.BlueScore;
+            buffer[1] = this.GreenScore;
+            buffer[2] = this.CaptureLimit;
+            buffer[3] = (byte)((byte)(this.BlueHasIntel ? 1 : 0) | ((byte)(this.GreenHasIntel ? 1 : 0) << 1));
 
-            byte team1HasIntel = (byte)(BlueHasIntel ? 1 : 0);
-            byte team2HasIntel = (byte)(GreenHasIntel ? 1 : 0);
+            this.BlueIntel.Write(buffer.Slice(4, 12));
+            this.GreenIntel.Write(buffer.Slice(16, 12));
 
-            byte intelFlags = (byte)(team1HasIntel | (team2HasIntel << 1));
-            buffer[3] = intelFlags;
-
-            BlueIntel.Write(buffer.Slice(4, 12));
-            GreenIntel.Write(buffer.Slice(16, 12));
-
-            buffer.WritePosition(BlueBasePosition, 28);
-            buffer.WritePosition(GreenBasePosition, 40);
+            buffer.WritePosition(this.BlueBasePosition, 28);
+            buffer.WritePosition(this.GreenBasePosition, 40);
         }
     }
 
@@ -54,15 +54,13 @@ namespace SharpSpades.Net.Packets.State
 
         internal void Write(Span<byte> buffer)
         {
-            if (IsHeld)
+            if (this.IsHeld)
             {
-                buffer[0] = Holder;
-                buffer.Slice(1).Fill(0);
+                buffer[0] = this.Holder;
+                buffer[1..].Fill(0);
             }
             else
-            {
-                buffer.WritePosition(Position);
-            }
+                buffer.WritePosition(this.Position);
         }
     }
 }
