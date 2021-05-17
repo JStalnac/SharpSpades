@@ -9,10 +9,7 @@ namespace SharpSpades.Entities
 
         public Client Client { get; set; }
 
-        internal Player(Client client)
-        {
-            this.Client = client;
-        }
+        internal Player(Client client) => this.Client = client;
 
         internal override Task UpdateAsync(float delta) => base.UpdateAsync(delta);
     }

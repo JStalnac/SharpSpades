@@ -27,7 +27,7 @@ namespace SharpSpades.Utils
             if (!_hasRegisteredEncoding)
                 RegisterEncoding();
 
-            Throw.IfNull(s, nameof(s));
+            Throw.IfNull(s, new NullReferenceException($"The {nameof(s)} cannot be null!"));
 
             return _cp437.GetBytes(s);
         }

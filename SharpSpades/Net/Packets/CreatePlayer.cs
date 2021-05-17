@@ -17,24 +17,30 @@ namespace SharpSpades.Net.Packets
 
         [Field(0)]
         public byte PlayerId { get; set; }
+
         [Field(1)]
         [ActualType(typeof(byte))]
         public WeaponType Weapon { get; set; }
+
         [Field(2)]
         [ActualType(typeof(byte))]
         public TeamType Team { get; set; }
+
         [Field(3)]
         public Vector3 Position { get; set; }
+
         [Field(4)]
         public string Name
         {
             get => name ?? throw new InvalidOperationException("Name must not be null");
             set
             {
-                Throw.IfNull(value);
+                Throw.IfNull(value, new NullReferenceException($"The {nameof(value)} cannot be null!"));
+
                 if (!NameUtils.IsValidName(value))
                     throw new ArgumentException("Invalid name");
-                name = value;
+
+                this.name = value;
             }
         }
 

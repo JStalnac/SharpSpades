@@ -26,15 +26,13 @@ namespace SharpSpades.Net
             get => this.name;
             internal set
             {
-                Throw.IfNull(value);
-
-                if (name is not null)
-                    throw new InvalidOperationException("The name is already set");
+                Throw.IfNull(value, new NullReferenceException($"The {nameof(value)} cannot be null!"));
+                Throw.IfNotNull(name, new InvalidOperationException("The name is already set"));
 
                 if (!NameUtils.IsValidName(value))
                     throw new ArgumentException($"Invalid name '{value}'");
 
-                name = value;
+                this.name = value;
             }
         }
 
@@ -56,8 +54,8 @@ namespace SharpSpades.Net
 
         public Client(Server server, ENetAsyncPeer peer, byte id)
         {
-            Throw.IfNull(peer, nameof(peer));
-            Throw.IfNull(server, nameof(server));
+            Throw.IfNull(peer, new NullReferenceException($"The {nameof(peer)} cannot be null!"));
+            Throw.IfNull(server, new NullReferenceException($"The {nameof(server)} cannot be null!"));
 
             this.Server = server;
             this.peer = peer;
@@ -200,7 +198,7 @@ namespace SharpSpades.Net
 
         public async ValueTask SendPacketAsync(Packet packet)
         {
-            Throw.IfNull(packet, nameof(packet));
+            Throw.IfNull(packet, new NullReferenceException($"The {nameof(packet)} cannot be null!"));
 
             // TODO: Trigger event
 

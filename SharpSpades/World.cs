@@ -1,6 +1,7 @@
 ﻿using SharpSpades.Entities;
 using SharpSpades.Utils;
 using SharpSpades.Vxl;
+using System;
 using System.Collections.Generic;
 
 namespace SharpSpades
@@ -11,20 +12,18 @@ namespace SharpSpades
 
         private HashSet<Entity> Entities { get; } = new();
 
-        private object entityLock = new object();
+        private object entityLock = new();
 
-        internal World(Map map)
-        {
-            Map = map;
-        }
+        internal World(Map map) => this.Map = map;
 
         public void AddEntity(Entity entity)
         {
-            Throw.IfNull(entity);
+            Throw.IfNull(entity, new NullReferenceException($"The {nameof(entity)} cannot be null!"));
 
             lock(entityLock)
             {
-                Entities.Add(entity);
+                this.Entities.Add(entity);
+
                 entity.World = this;
             }
         }
@@ -34,7 +33,7 @@ namespace SharpSpades
             lock(entityLock)
             {
                 // Should maybe set the world to null or something
-                Entities.Remove(entity);
+                this.Entities.Remove(entity);
             }
         }
     }

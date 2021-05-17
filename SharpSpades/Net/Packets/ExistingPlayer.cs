@@ -15,29 +15,37 @@ namespace SharpSpades.Net.Packets
 
         [Field(0)]
         public byte PlayerId { get; set; }
+
         [Field(1)]
         [ActualType(typeof(byte))]
         public TeamType Team { get; set; }
+
         [Field(2)]
         [ActualType(typeof(byte))]
         public WeaponType Weapon { get; set; }
+
         [Field(3)]
         public byte HeldItem { get; set; }
+
         [Field(4)]
         public uint Kills { get; set; }
+
         [Field(5)]
         public Color Color { get; set; }
+
         [Field(6)]
         [Length(16)]
         public string Name
         {
-            get => name ?? throw new InvalidOperationException("Name must not be null");
+            get => this.name ?? throw new InvalidOperationException("Name must not be null");
             set
             {
-                Throw.IfNull(value);
+                Throw.IfNull(value, new NullReferenceException($"The {nameof(value)} cannot be null!"));
+
                 if (!NameUtils.IsValidName(value))
                     throw new ArgumentException("Invalid name");
-                name = value;
+
+                this.name = value;
             }
         }
 
@@ -45,8 +53,9 @@ namespace SharpSpades.Net.Packets
 
         internal override async Task HandleAsync(Client client)
         {
-            client.Name = Name;
+            client.Name = this.Name;
             client.Server.World.AddEntity(new Player(client));
+            
             await client.SendPacketAsync(this);
         }
     }
