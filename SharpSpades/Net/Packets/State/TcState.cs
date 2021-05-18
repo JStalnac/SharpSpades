@@ -18,7 +18,8 @@ namespace SharpSpades.Net.Packets.State
             get => territories;
             init
             {
-                Throw.If(value.Length, x => x > MaxTerritories, new ArgumentOutOfRangeException(nameof(value.Length), "Maximum number of territories is 16"));
+                if (value.Length > MaxTerritories)
+                    throw new ArgumentOutOfRangeException(nameof(value.Length), $"Maximum number of territories is {MaxTerritories}");
 
                 territories = value;
             }
@@ -27,7 +28,7 @@ namespace SharpSpades.Net.Packets.State
         public void WriteTo(Span<byte> buffer)
         {
             buffer[0] = (byte)this.Territories.Length;
-            
+
             Span<byte> span = buffer[1..];
 
             foreach (var t in territories)

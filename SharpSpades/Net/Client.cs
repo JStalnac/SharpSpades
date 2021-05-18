@@ -26,11 +26,11 @@ namespace SharpSpades.Net
             get => this.name;
             internal set
             {
-                Throw.IfNull(value, new NullReferenceException($"The {nameof(value)} cannot be null!"));
-                Throw.IfNotNull(name, new InvalidOperationException("The name is already set"));
+                Throw.IfNull(value, nameof(value), StringUtils.GenerateNullExceptionMessage());
+                Throw.IfNotNull(name, $"The {nameof(name)} is already set!");
 
                 if (!NameUtils.IsValidName(value))
-                    throw new ArgumentException($"Invalid name '{value}'");
+                    throw new ArgumentException($"Invalid name in \"{value}\"");
 
                 this.name = value;
             }
@@ -54,8 +54,8 @@ namespace SharpSpades.Net
 
         public Client(Server server, ENetAsyncPeer peer, byte id)
         {
-            Throw.IfNull(peer, new NullReferenceException($"The {nameof(peer)} cannot be null!"));
-            Throw.IfNull(server, new NullReferenceException($"The {nameof(server)} cannot be null!"));
+            Throw.IfNull(peer, nameof(peer), StringUtils.GenerateNullExceptionMessage());
+            Throw.IfNull(server, nameof(server), StringUtils.GenerateNullExceptionMessage());
 
             this.Server = server;
             this.peer = peer;
@@ -198,7 +198,7 @@ namespace SharpSpades.Net
 
         public async ValueTask SendPacketAsync(Packet packet)
         {
-            Throw.IfNull(packet, new NullReferenceException($"The {nameof(packet)} cannot be null!"));
+            Throw.IfNull(packet, nameof(packet), StringUtils.GenerateNullExceptionMessage());
 
             // TODO: Trigger event
 
@@ -246,8 +246,7 @@ namespace SharpSpades.Net
         /// Disconnects the client.
         /// </summary>
         /// <param name="reason"></param>
-        public ValueTask Disconnect(DisconnectReason reason)
-            => peer.DisconnectAsync((uint)reason);
+        public async Task DisconnectAsync(DisconnectReason reason) => await this.peer.DisconnectAsync((uint)reason);
 
         private void AddPackets()
         {

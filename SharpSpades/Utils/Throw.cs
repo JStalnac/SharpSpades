@@ -6,16 +6,16 @@ namespace SharpSpades.Utils
 {
     internal static class Throw
     {
-        public static void If<T>(T? obj, Predicate<T?> predicate, Exception exception) //where T : class
+        public static void IfNull<T>(T? obj, string? paramName = null, string? message = null)
         {
-            if (predicate.Invoke(obj))
-                throw exception;
+            if (obj is null)
+                throw new ArgumentNullException(paramName, message);
         }
 
-        public static void IfNull<T>(T? obj, Exception exception) //where T : class
-            => If(obj, x => x is null, exception);
-
-        public static void IfNotNull<T>(T? obj, Exception exception)
-            => If(obj, x => x is not null, exception);
+        public static void IfNotNull<T>(T? obj, string? message = null)
+        {
+            if (obj is not null)
+                throw new InvalidOperationException(message);
+        }
     }
 }

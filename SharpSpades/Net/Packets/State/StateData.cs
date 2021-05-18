@@ -31,16 +31,17 @@ namespace SharpSpades.Net.Packets.State
 
         private string _blueName = "Blue", _greenName = "Green";
 
-        private const string TeamNameException = "The team name can a maximum of ten characters long",
-                             TeamNullException = "The team name can be null!";
+        private const string TeamNameException = "The team name can a maximum of ten characters long";
 
         public string BlueName
         {
             get => this._blueName;
             init
             {
-                Throw.IfNull(value, new NullReferenceException(TeamNullException));
-                Throw.If(value.Length, x => x > 10, new ArgumentOutOfRangeException(nameof(value), TeamNameException));
+                Throw.IfNull(value, nameof(value), StringUtils.GenerateNullExceptionMessage());
+
+                if (value.Length > 10)
+                    throw new ArgumentOutOfRangeException(nameof(value), TeamNameException);
 
                 this._blueName = value;
             }
@@ -50,8 +51,10 @@ namespace SharpSpades.Net.Packets.State
             get => this._greenName;
             init
             {
-                Throw.IfNull(value, new NullReferenceException(TeamNullException));
-                Throw.If(value.Length, x => x > 10, new ArgumentOutOfRangeException(nameof(value), TeamNameException));
+                Throw.IfNull(value, nameof(value), StringUtils.GenerateNullExceptionMessage());
+
+                if (value.Length > 10)
+                    throw new ArgumentOutOfRangeException(nameof(value), TeamNameException);
 
                 this._greenName = value;
             }
@@ -81,7 +84,7 @@ namespace SharpSpades.Net.Packets.State
 
         internal override void Write(Span<byte> buffer)
         {
-            Throw.IfNull(this.State, new InvalidOperationException("State cannot be null"));
+            Throw.IfNull(this.State, nameof(this.State), StringUtils.GenerateNullExceptionMessage());
 
             buffer[0] = this.PlayerId;
             buffer.WriteColor(this.FogColor, 1);

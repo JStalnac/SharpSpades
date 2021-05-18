@@ -43,7 +43,7 @@ namespace SharpSpades
 
         public Server(string configurationDirectory)
         {
-            Throw.IfNull(configurationDirectory, new NullReferenceException($"The {nameof(configurationDirectory)} cannot be null!"));
+            Throw.IfNull(configurationDirectory, nameof(configurationDirectory), StringUtils.GenerateNullExceptionMessage());
 
             this.RootDirectory = Path.IsPathRooted(configurationDirectory) ?
                                  configurationDirectory :

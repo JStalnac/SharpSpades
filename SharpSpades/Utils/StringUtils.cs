@@ -27,7 +27,7 @@ namespace SharpSpades.Utils
             if (!_hasRegisteredEncoding)
                 RegisterEncoding();
 
-            Throw.IfNull(s, new NullReferenceException($"The {nameof(s)} cannot be null!"));
+            Throw.IfNull(s, nameof(s), GenerateNullExceptionMessage());
 
             return _cp437.GetBytes(s);
         }
@@ -49,5 +49,13 @@ namespace SharpSpades.Utils
         /// </summary>
         /// <param name="s">The string.</param>
         public static bool IsNullOrEmptyOrWhiteSpace(this string s) => string.IsNullOrEmpty(s) || string.IsNullOrWhiteSpace(s);
+
+        /// <summary>
+        /// Generates a standard message that can be used in the <see cref="ArgumentNullException"/> or <see cref="NullReferenceException"/>.
+        /// </summary>
+        /// <param name="paramName">Name of the <see langword="null"/> variable.</param>
+        /// <returns></returns>
+        public static string GenerateNullExceptionMessage(string paramName = null)
+            => paramName.IsNullOrEmptyOrWhiteSpace() ? "This cannot be null!" : $"The {nameof(paramName)} cannot be null!";
     }
 }
