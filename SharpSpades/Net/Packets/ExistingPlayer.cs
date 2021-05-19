@@ -40,7 +40,7 @@ namespace SharpSpades.Net.Packets
             get => this.name ?? throw new InvalidOperationException("Name must not be null");
             set
             {
-                Throw.IfNull(value, nameof(value), StringUtils.GenerateNullExceptionMessage());
+                Throw.IfNull(value, nameof(value));
 
                 if (!NameUtils.IsValidName(value))
                     throw new ArgumentException("Invalid name");

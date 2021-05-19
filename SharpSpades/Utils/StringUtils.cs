@@ -22,12 +22,13 @@ namespace SharpSpades.Utils
         /// Decodes the string as a CP437 string and returns the bytes.
         /// </summary>
         /// <param name="s"></param>
+        /// <returns></returns>
         public static byte[] ToCP437String(this string s)
         {
             if (!_hasRegisteredEncoding)
                 RegisterEncoding();
 
-            Throw.IfNull(s, nameof(s), GenerateNullExceptionMessage());
+            Throw.IfNull(s, nameof(s));
 
             return _cp437.GetBytes(s);
         }
@@ -36,6 +37,7 @@ namespace SharpSpades.Utils
         /// Reads a CP437 string from the buffer and decodes it into a string.
         /// </summary>
         /// <param name="buffer">The buffer to read the string from.</param>
+        /// <returns></returns>
         public static string ReadCP437String(this ReadOnlySpan<byte> buffer)
         {
             if (!_hasRegisteredEncoding)
@@ -48,6 +50,7 @@ namespace SharpSpades.Utils
         /// Check if a string is null or empty or contains a white space.
         /// </summary>
         /// <param name="s">The string.</param>
+        /// <returns></returns>
         public static bool IsNullOrEmptyOrWhiteSpace(this string s) => string.IsNullOrEmpty(s) || string.IsNullOrWhiteSpace(s);
 
         /// <summary>

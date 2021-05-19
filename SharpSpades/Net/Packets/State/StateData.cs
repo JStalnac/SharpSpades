@@ -38,7 +38,7 @@ namespace SharpSpades.Net.Packets.State
             get => this._blueName;
             init
             {
-                Throw.IfNull(value, nameof(value), StringUtils.GenerateNullExceptionMessage());
+                Throw.IfNull(value, nameof(value));
 
                 if (value.Length > 10)
                     throw new ArgumentOutOfRangeException(nameof(value), TeamNameException);
@@ -51,7 +51,7 @@ namespace SharpSpades.Net.Packets.State
             get => this._greenName;
             init
             {
-                Throw.IfNull(value, nameof(value), StringUtils.GenerateNullExceptionMessage());
+                Throw.IfNull(value, nameof(value));
 
                 if (value.Length > 10)
                     throw new ArgumentOutOfRangeException(nameof(value), TeamNameException);
@@ -84,7 +84,7 @@ namespace SharpSpades.Net.Packets.State
 
         internal override void Write(Span<byte> buffer)
         {
-            Throw.IfNull(this.State, nameof(this.State), StringUtils.GenerateNullExceptionMessage());
+            Throw.IfNull(this.State, nameof(this.State));
 
             buffer[0] = this.PlayerId;
             buffer.WriteColor(this.FogColor, 1);

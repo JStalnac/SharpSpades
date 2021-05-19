@@ -26,7 +26,7 @@ namespace SharpSpades.Net
             get => this.name;
             internal set
             {
-                Throw.IfNull(value, nameof(value), StringUtils.GenerateNullExceptionMessage());
+                Throw.IfNull(value, nameof(value));
                 Throw.IfNotNull(name, $"The {nameof(name)} is already set!");
 
                 if (!NameUtils.IsValidName(value))
@@ -54,8 +54,8 @@ namespace SharpSpades.Net
 
         public Client(Server server, ENetAsyncPeer peer, byte id)
         {
-            Throw.IfNull(peer, nameof(peer), StringUtils.GenerateNullExceptionMessage());
-            Throw.IfNull(server, nameof(server), StringUtils.GenerateNullExceptionMessage());
+            Throw.IfNull(peer, nameof(peer));
+            Throw.IfNull(server, nameof(server));
 
             this.Server = server;
             this.peer = peer;
@@ -198,7 +198,7 @@ namespace SharpSpades.Net
 
         public async ValueTask SendPacketAsync(Packet packet)
         {
-            Throw.IfNull(packet, nameof(packet), StringUtils.GenerateNullExceptionMessage());
+            Throw.IfNull(packet, nameof(packet));
 
             // TODO: Trigger event
 

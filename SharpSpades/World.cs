@@ -18,7 +18,7 @@ namespace SharpSpades
 
         public void AddEntity(Entity entity)
         {
-            Throw.IfNull(entity, nameof(entity), StringUtils.GenerateNullExceptionMessage());
+            Throw.IfNull(entity, nameof(entity));
 
             lock(entityLock)
             {
