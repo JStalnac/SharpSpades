@@ -4,6 +4,8 @@ using System;
 using System.Numerics;
 using System.Threading.Tasks;
 
+#nullable enable
+
 namespace SharpSpades.Net.Packets
 {
     [WriteOnly]
@@ -11,32 +13,38 @@ namespace SharpSpades.Net.Packets
     {
         public override byte Id => 12;
 
-        public override int Length => 1 + 1 + 1 + 12 + Name.Length;
+        public override int Length => 1 + 1 + 1 + 12 + this.Name.Length;
 
         [Field(0)]
         public byte PlayerId { get; set; }
+
         [Field(1)]
         [ActualType(typeof(byte))]
         public WeaponType Weapon { get; set; }
+
         [Field(2)]
         [ActualType(typeof(byte))]
         public TeamType Team { get; set; }
+
         [Field(3)]
         public Vector3 Position { get; set; }
+
         [Field(4)]
         public string Name
         {
             get => name ?? throw new InvalidOperationException("Name must not be null");
             set
             {
-                Throw.IfNull(value);
+                Throw.IfNull(value, nameof(value));
+
                 if (!NameUtils.IsValidName(value))
                     throw new ArgumentException("Invalid name");
-                name = value;
+
+                this.name = value;
             }
         }
 
-        private string name = null;
+        private string? name;
 
         internal override Task HandleAsync(Client client)
             => Task.CompletedTask;

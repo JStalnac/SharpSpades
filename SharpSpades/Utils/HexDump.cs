@@ -7,7 +7,8 @@ namespace SharpSpades.Utils
     {
         public static string Create(ReadOnlySpan<byte> buffer, int bytesPerLine = 16)
         {
-            StringBuilder result = new();
+            var result = new StringBuilder();
+            
             for (int offset = 0; offset < buffer.Length; offset += bytesPerLine)
             {
                 result.Append($"{offset:X4}\t");
@@ -16,11 +17,13 @@ namespace SharpSpades.Utils
                 {
                     if (offset + i >= buffer.Length)
                         break;
+
                     result.Append($" {buffer[offset + i]:x2}");
                 }
 
                 result.AppendLine();
             }
+
             return result.ToString();
         }
     }
