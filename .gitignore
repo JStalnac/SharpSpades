@@ -6,6 +6,7 @@ obj/
 .idea/
 .vs/
 .vscode/
+*.user
 
 # Map files
 *.vxl
