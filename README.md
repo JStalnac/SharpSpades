@@ -11,8 +11,23 @@ Inspired by [Piqueserver](https://github.com/piqueserver/piqueserver) and [Obsid
  - ...
 
 ## Contributing
-Feel free to send us a PR or create an issue if you find any problems!
-The server is currently in need of map serialization and a physics engine/system.
+Feel free to send a PR or create an issue if you find any problems!
+
+If you want to work on something:
+- Check that someone isn't already doing the same thing
+- Create an issue to inform everyone that you're working on it
+
+If you use an IDE that supports EditorConfig files, use the EditorConfig
+in the repo root. If your editor doesn't support EditorConfigs, look 
+at other files in the project for reference for code style etc.
+
+### Things to work on
+ - [ ] Physics
+   - [ ] Players
+     - [ ] Tests
+   - [ ] Grenades
+     - [ ] Tests
+ - [ ] Map serialization
 
 ### Project structure
 `SharpSpades` - The server itself, plugins will use this when implemented
