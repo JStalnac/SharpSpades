@@ -29,13 +29,14 @@ namespace SharpSpades.Net.Packets.State
         /// </summary>
         public Color GreenColor { get; init; }
 
-        private string _blueName = "Blue", _greenName = "Green";
+        private readonly string blueName = "Blue";
+        private readonly string greenName = "Green";
 
         private const string TeamNameException = "The team name can a maximum of ten characters long";
 
         public string BlueName
         {
-            get => _blueName;
+            get => blueName;
             init
             {
                 Throw.IfNull(value, nameof(value));
@@ -43,13 +44,13 @@ namespace SharpSpades.Net.Packets.State
                 if (value.Length > 10)
                     throw new ArgumentOutOfRangeException(nameof(value), TeamNameException);
 
-                _blueName = value;
+                blueName = value;
             }
         }
 
         public string GreenName
         {
-            get => _greenName;
+            get => greenName;
             init
             {
                 Throw.IfNull(value, nameof(value));
@@ -57,7 +58,7 @@ namespace SharpSpades.Net.Packets.State
                 if (value.Length > 10)
                     throw new ArgumentOutOfRangeException(nameof(value), TeamNameException);
 
-                _greenName = value;
+                greenName = value;
             }
         }
 
