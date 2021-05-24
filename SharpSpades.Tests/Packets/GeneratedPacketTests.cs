@@ -1,14 +1,23 @@
-using SharpSpades;
 using SharpSpades.Net.Packets;
 using SharpSpades.Net.Packets.State;
+using SharpSpades.Utils;
 using System;
 using System.Numerics;
 using Xunit;
+using Xunit.Abstractions;
 
-namespace Tests
+namespace SharpSpades.Tests.Packets
 {
     public class GeneratedPacketTests
     {
+        private readonly ITestOutputHelper output;
+        
+        public GeneratedPacketTests(ITestOutputHelper output)
+        {
+            this.output = output;
+        }
+        
+        [Fact]
         public void TestWrite()
         {
             var ms = new MapStart { MapSize = 1024 };
@@ -44,12 +53,17 @@ namespace Tests
                 (byte)TeamType.Blue,
 
                 // Position
-                0x0, 0x0, 0x0,
+                0x0, 0x0, 0x0, 0x00,
+                0x0, 0x0, 0x0, 0x00,
+                0x0, 0x0, 0x0, 0x00,
 
                 // Name
                 0x44, 0x65, 0x75, 0x63, 0x65
             };
 
+            output.WriteLine(HexDump.Create(expected));
+            output.WriteLine(HexDump.Create(buffer));
+            
             Assert.Equal(expected, buffer);
         }
     }
