@@ -82,13 +82,7 @@ namespace SharpSpades
                         shared: true, outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] [{SourceContext}] {Message:lj}{NewLine}{Exception}");
 
                 // Apply default log level
-                LogEventLevel level;
-                var defaultLevel = GetLevel(loggingConfig.Default);
-                if (!defaultLevel.HasValue)
-                    level = LogEventLevel.Information;
-                else
-                    level = defaultLevel.Value;
-                logger.MinimumLevel.Is(level);
+                logger.MinimumLevel.Is(GetLevel(loggingConfig.Default) ?? LogEventLevel.Information);
 
                 // Apply log level overrides
                 foreach (string s in loggingConfig.Trace)
@@ -135,15 +129,13 @@ namespace SharpSpades
 
             Logger.LogInformation("Loading");
 
-            Stopwatch sw = new();
+            var sw = new Stopwatch();
 
             // Load the map
             Logger.LogInformation("Loading map...");
 
-            string mapName = Configuration["MapName"] ?? "classicgen.vxl";
-
             sw.Start();
-            await Task.Run(() => LoadMap(mapName));
+            await Task.Run(() => LoadMap(Configuration["MapName"] ?? "classicgen.vxl"));
             sw.Stop();
 
             Logger.LogInformation("Loaded map (Took {0:0.00} s)", sw.Elapsed.TotalSeconds);
@@ -155,14 +147,13 @@ namespace SharpSpades
                 ManagedENet.Startup();
             }
 
-            var listenEndPoint = new IPEndPoint(IPAddress.Loopback, port);
-
             // Create host
             Logger.LogDebug("Creating host...");
-            ENetAsyncHost host;
+
+            ENetAsyncHost? host = null;
             try
             {
-                host = new ENetAsyncHost(listenEndPoint, MaxPlayers, 1);
+                host = new ENetAsyncHost(new IPEndPoint(IPAddress.Loopback, port), MaxPlayers, 1);
             }
             catch (NullReferenceException)
             {
@@ -210,16 +201,16 @@ namespace SharpSpades
 
                     Logger.LogInformation($"Client connected: {peer.RemoteEndPoint}");
 
-                    byte id = GetFreeId(Clients.Select(c => c.Value.Id).ToArray());
+                    var client = new Client(this, peer, GetFreeId(this.Clients.Select(c => c.Value.Id).ToArray()));
+                    client.Disconnected += p => this.Clients.TryRemove(p, out _);
 
-                    var client = new Client(this, peer, id);
-                    client.Disconnected += p => Clients.TryRemove(p, out _);
                     Clients.TryAdd(peer, client);
-                    _ = Task.Run(client.StartAsync)
-                        .ContinueWith(t => { Logger.LogError(t.Exception, "An exception occured in a client thread"); },
+
+                    _ = Task.Run(client.StartAsync).ContinueWith(t =>
+                            Logger.LogError(t.Exception, "An exception occured in a client thread"),
                             TaskContinuationOptions.OnlyOnFaulted);
 
-                    Logger.LogDebug("Clients connected: {0}", Clients.Count);
+                    Logger.LogDebug("Clients connected: {0}", this.Clients.Count);
                 }
             }
             catch (OperationCanceledException)
@@ -309,14 +300,10 @@ namespace SharpSpades
             if (inUse.Length == 0)
                 return 0;
 
-            byte[] ids = inUse.OrderBy(x => x)
-                .ToArray();
             byte id = 0;
 
-            for (int i = 0; i < inUse.Length; i++)
+            foreach (var lowest in inUse)
             {
-                byte lowest = inUse[i];
-
                 for (; id <= lowest; id++)
                 {
                     if (id != lowest)
@@ -328,7 +315,7 @@ namespace SharpSpades
 
         private static LogEventLevel? GetLevel(string level)
         {
-            return level switch
+            return level.ToLower() switch
             {
                 "trace" or "verbose" => LogEventLevel.Verbose,
                 "debug" => LogEventLevel.Debug,

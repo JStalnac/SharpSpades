@@ -6,6 +6,7 @@ namespace SharpSpades.Entities
     public class Player : Entity
     {
         public string Name => Client.Name;
+
         public Client Client { get; set; }
 
         internal Player(Client client)
@@ -14,8 +15,6 @@ namespace SharpSpades.Entities
         }
 
         internal override Task UpdateAsync()
-        {
-            return base.UpdateAsync();
-        }
+            => base.UpdateAsync();
     }
 }

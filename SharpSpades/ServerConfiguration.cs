@@ -17,7 +17,7 @@ namespace SharpSpades
 
     public class LoggingConfiguration
     {
-        [TomlComment(@" The default log level. Defaults to 'information'")]
+        [TomlComment(" The default log level. Defaults to 'information'")]
         public string Default { get; set; } = "information";
 
         public string[] Trace { get; set; } = Array.Empty<string>();
