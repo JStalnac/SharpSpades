@@ -11,18 +11,12 @@ namespace Tests
     {
         public void TestWrite()
         {
-            var ms = new MapStart
-            {
-                MapSize = 1024
-            };
-            
+            var ms = new MapStart { MapSize = 1024 };
+
             byte[] buffer = new byte[ms.Length];
             ms.Write(buffer.AsSpan());
 
-            byte[] expected = new byte[]
-            {
-                0x0, 0x4, 0x0, 0x0
-            };
+            byte[] expected = new byte[] { 0x0, 0x4, 0x0, 0x0 };
 
             Assert.Equal(expected, buffer);
 
@@ -42,14 +36,16 @@ namespace Tests
             {
                 // ID
                 0x0,
+
                 // Weapon
                 0x0,
+
                 // Team
                 (byte)TeamType.Blue,
+
                 // Position
-                0x0,
-                0x0,
-                0x0,
+                0x0, 0x0, 0x0,
+
                 // Name
                 0x44, 0x65, 0x75, 0x63, 0x65
             };

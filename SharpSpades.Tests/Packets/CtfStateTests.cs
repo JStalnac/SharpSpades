@@ -37,38 +37,50 @@ namespace SharpSpades.Tests.Packets
             byte[] expected = new byte[]
             {
                 // Scores
-                0x02,
-                0x03,
+                0x02, 0x03,
+
                 // Capture limit
                 0x05,
+
                 // Intel flags
                 0x03,
+
                 // Blue intel location
                 // Holder
                 0x01,
+
                 // Padding
                 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+
                 // Green intel location
                 // X
                 0x00, 0x00, 0x80, 0x3F,
+
                 // Y
                 0x00, 0x00, 0x80, 0x3F,
+
                 // Z
                 0x00, 0x00, 0x80, 0x3F,
+
                 // Blue base location
                 // X
                 0x00, 0x00, 0x20, 0x41,
+
                 // Y
                 0x00, 0x00, 0x20, 0x41,
+
                 // Z
                 0x00, 0x00, 0x20, 0x41,
+
                 // Green base location
                 // X
                 0x00, 0x00, 0xA0, 0x41,
+
                 // Y
                 0x00, 0x00, 0xA0, 0x41,
+
                 // Z
-                0x00, 0x00, 0xA0, 0x41,
+                0x00, 0x00, 0xA0, 0x41
             };
 
             // Console.WriteLine(HexDump.Create(expected));

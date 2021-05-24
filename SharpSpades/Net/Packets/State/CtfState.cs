@@ -28,16 +28,16 @@ namespace SharpSpades.Net.Packets.State
 
         public void WriteTo(Span<byte> buffer)
         {
-            buffer[0] = this.BlueScore;
-            buffer[1] = this.GreenScore;
-            buffer[2] = this.CaptureLimit;
-            buffer[3] = (byte)((byte)(this.BlueHasIntel ? 1 : 0) | ((byte)(this.GreenHasIntel ? 1 : 0) << 1));
+            buffer[0] = BlueScore;
+            buffer[1] = GreenScore;
+            buffer[2] = CaptureLimit;
+            buffer[3] = (byte)((byte)(BlueHasIntel ? 1 : 0) | ((byte)(GreenHasIntel ? 1 : 0) << 1));
 
-            this.BlueIntel.Write(buffer.Slice(4, 12));
-            this.GreenIntel.Write(buffer.Slice(16, 12));
+            BlueIntel.Write(buffer.Slice(4, 12));
+            GreenIntel.Write(buffer.Slice(16, 12));
 
-            buffer.WritePosition(this.BlueBasePosition, 28);
-            buffer.WritePosition(this.GreenBasePosition, 40);
+            buffer.WritePosition(BlueBasePosition, 28);
+            buffer.WritePosition(GreenBasePosition, 40);
         }
     }
 
@@ -54,13 +54,13 @@ namespace SharpSpades.Net.Packets.State
 
         internal void Write(Span<byte> buffer)
         {
-            if (this.IsHeld)
+            if (IsHeld)
             {
-                buffer[0] = this.Holder;
+                buffer[0] = Holder;
                 buffer[1..].Fill(0);
             }
             else
-                buffer.WritePosition(this.Position);
+                buffer.WritePosition(Position);
         }
     }
 }

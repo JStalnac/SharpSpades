@@ -7,6 +7,9 @@ namespace SharpSpades.Net.Packets.Attributes
     {
         public Type Type { get; }
 
-        public ActualTypeAttribute(Type type) => this.Type = type;
+        public ActualTypeAttribute(Type type)
+        {
+            Type = type;
+        }
     }
 }

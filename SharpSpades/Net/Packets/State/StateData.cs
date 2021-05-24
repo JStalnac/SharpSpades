@@ -10,7 +10,7 @@ namespace SharpSpades.Net.Packets.State
         public override byte Id => 15;
 
         // Player Id, Gamemode Id, 3 * Color, 2 * Name
-        public override int Length => 1 + 1 + (3 * 3) + (2 * 10) + (int)this.State?.Length;
+        public override int Length => 1 + 1 + 3 * 3 + 2 * 10 + (int)State?.Length;
 
         /// <summary>
         /// The id of the player.
@@ -35,7 +35,7 @@ namespace SharpSpades.Net.Packets.State
 
         public string BlueName
         {
-            get => this._blueName;
+            get => _blueName;
             init
             {
                 Throw.IfNull(value, nameof(value));
@@ -43,12 +43,13 @@ namespace SharpSpades.Net.Packets.State
                 if (value.Length > 10)
                     throw new ArgumentOutOfRangeException(nameof(value), TeamNameException);
 
-                this._blueName = value;
+                _blueName = value;
             }
         }
+
         public string GreenName
         {
-            get => this._greenName;
+            get => _greenName;
             init
             {
                 Throw.IfNull(value, nameof(value));
@@ -56,7 +57,7 @@ namespace SharpSpades.Net.Packets.State
                 if (value.Length > 10)
                     throw new ArgumentOutOfRangeException(nameof(value), TeamNameException);
 
-                this._greenName = value;
+                _greenName = value;
             }
         }
 
@@ -65,18 +66,18 @@ namespace SharpSpades.Net.Packets.State
         public StateData() { }
 
         public StateData(byte playerId,
-                         Color fogColor,
-                         Color blueTeamColor,
-                         Color greenTeamColor,
-                         string blueName,
-                         string greenName)
+            Color fogColor,
+            Color blueTeamColor,
+            Color greenTeamColor,
+            string blueName,
+            string greenName)
         {
-            this.PlayerId = playerId;
-            this.FogColor = fogColor;
-            this.BlueColor = blueTeamColor;
-            this.GreenColor = greenTeamColor;
-            this.BlueName = blueName;
-            this.GreenName = greenName;
+            PlayerId = playerId;
+            FogColor = fogColor;
+            BlueColor = blueTeamColor;
+            GreenColor = greenTeamColor;
+            BlueName = blueName;
+            GreenName = greenName;
         }
 
         internal override void Read(ReadOnlySpan<byte> buffer)
@@ -84,24 +85,24 @@ namespace SharpSpades.Net.Packets.State
 
         internal override void Write(Span<byte> buffer)
         {
-            Throw.IfNull(this.State, nameof(this.State));
+            Throw.IfNull(State, nameof(State));
 
-            buffer[0] = this.PlayerId;
-            buffer.WriteColor(this.FogColor, 1);
-            buffer.WriteColor(this.BlueColor, 4);
-            buffer.WriteColor(this.GreenColor, 7);
+            buffer[0] = PlayerId;
+            buffer.WriteColor(FogColor, 1);
+            buffer.WriteColor(BlueColor, 4);
+            buffer.WriteColor(GreenColor, 7);
 
-            Span<byte> name = this.BlueName.ToCP437String();
+            Span<byte> name = BlueName.ToCP437String();
             name.CopyTo(buffer.Slice(10, 10));
-            name = this.GreenName.ToCP437String();
+            name = GreenName.ToCP437String();
             name.CopyTo(buffer.Slice(20, 10));
 
-            if (this.State is CtfState ctf)
+            if (State is CtfState ctf)
             {
                 buffer[30] = 0;
                 ctf.WriteTo(buffer[31..]);
             }
-            else if (this.State is TcState tc)
+            else if (State is TcState tc)
             {
                 buffer[30] = 1;
                 tc.WriteTo(buffer[31..]);

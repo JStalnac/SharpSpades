@@ -42,8 +42,8 @@ namespace SharpSpades.Generators.Data
             var attributes = dec.AttributeLists.SelectMany(list => list.Attributes);
 
             Index = Int32.Parse(attributes.First(a => a.Name.ToString() == PacketGenerator.FieldAttribute)
-                        .ArgumentList.Arguments.First().GetText().ToString());
-            
+                .ArgumentList.Arguments.First().GetText().ToString());
+
             foreach (var a in attributes)
             {
                 var args = a.ArgumentList.Arguments;
@@ -51,7 +51,7 @@ namespace SharpSpades.Generators.Data
                 {
                     case ActualTypeAttribute:
                         var @typeof = a.DescendantNodes().First(node => node is TypeOfExpressionSyntax) as TypeOfExpressionSyntax;
-                        
+
                         // The compiler type name must be used directly, for example
                         // having System.String as the type wouldn't work
                         ActualType = @typeof.Type.GetText().ToString();

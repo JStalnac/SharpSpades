@@ -26,10 +26,11 @@ namespace SharpSpades.Vxl
 
         public Map()
         {
-            geometry = new(MapX * MapY * MapZ, true);
+            geometry = new BitArray(MapX * MapY * MapZ, true);
+
             //colors = new int?[MapX * MapY * MapZ];
         }
-        
+
         public static Map Load(Stream stream)
         {
             if (stream is null)
@@ -40,8 +41,10 @@ namespace SharpSpades.Vxl
             var map = new Map();
 
             for (int y = 0; y < MapY; y++)
+            {
                 for (int x = 0; x < MapX; x++)
                     ReadColumn(stream, map, x, y);
+            }
 
             stream.Position = 0;
             using (var ms = new MemoryStream())
@@ -82,7 +85,7 @@ namespace SharpSpades.Vxl
                 if (span.Length == 0)
                     break;
 
-                VxlSpan nextSpan = ReadSpan(stream);
+                var nextSpan = ReadSpan(stream);
 
                 int topColorLength = span.ColorEnd - span.ColorStart + 1;
                 int bottomColorLength = span.Length - 1 - topColorLength;
@@ -117,7 +120,7 @@ namespace SharpSpades.Vxl
                 // header and we already read it.
                 colorDataLength = (length - 1) * 4;
             }
-            
+
             // Read data
             byte[] colors = new byte[colorDataLength];
             stream.Read(colors, 0, colors.Length);
@@ -129,13 +132,13 @@ namespace SharpSpades.Vxl
         {
             if (!IsInRange(x, y, z))
                 throw new ArgumentOutOfRangeException($"The supplied position was out of range (X: {x} Y: {y} Z: {z})");
-            return x + (y * MapX) + (z * MapX * MapY);
+            return x + y * MapX + z * MapX * MapY;
         }
 
         public static bool IsInRange(int x, int y, int z)
             => x >= 0 && x < MapX
-            && y >= 0 && y < MapY
-            && z >= 0 && z < MapZ;
+                      && y >= 0 && y < MapY
+                      && z >= 0 && z < MapZ;
 
         //public void SetColor(int x, int y, int z, Color color)
         //{
@@ -160,7 +163,7 @@ namespace SharpSpades.Vxl
         //public Color GetColor(int x, int y, int z)
         //{
         //    int index = GetIndex(x, y, z);
-            
+
         //    if (!geometry[index])
         //        return Color.Empty;
 
@@ -181,15 +184,15 @@ namespace SharpSpades.Vxl
         {
             if (!IsInRange(x, y, z))
                 throw new ArgumentOutOfRangeException($"The supplied position was out of range");
-            
+
             // If the block is solid and at least one of its neighbors is an air block
             return IsSolid(x, y, z)
-                && ((x > 0 && !IsSolid(x - 1, y, z))
-                    || (x + 1 < MapX && !IsSolid(x + 1, y, z))
-                    || (y > 0 && !IsSolid(x, y - 1, z))
-                    || (y + 1 < MapY) && !IsSolid(x, y + 1, z))
-                    || (z > 0 && !IsSolid(x, y, z - 1))
-                    || (z + 1 < MapZ && !IsSolid(x, y, z + 1));
+                   && (x > 0 && !IsSolid(x - 1, y, z)
+                       || x + 1 < MapX && !IsSolid(x + 1, y, z)
+                       || y > 0 && !IsSolid(x, y - 1, z)
+                       || y + 1 < MapY && !IsSolid(x, y + 1, z))
+                   || z > 0 && !IsSolid(x, y, z - 1)
+                   || z + 1 < MapZ && !IsSolid(x, y, z + 1);
         }
     }
 }

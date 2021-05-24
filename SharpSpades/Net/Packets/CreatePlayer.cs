@@ -13,7 +13,7 @@ namespace SharpSpades.Net.Packets
     {
         public override byte Id => 12;
 
-        public override int Length => 1 + 1 + 1 + 12 + this.Name.Length;
+        public override int Length => 1 + 1 + 1 + 12 + Name.Length;
 
         [Field(0)]
         public byte PlayerId { get; set; }
@@ -40,7 +40,7 @@ namespace SharpSpades.Net.Packets
                 if (!NameUtils.IsValidName(value))
                     throw new ArgumentException("Invalid name");
 
-                this.name = value;
+                name = value;
             }
         }
 

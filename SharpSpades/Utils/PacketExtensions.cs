@@ -17,7 +17,7 @@ namespace SharpSpades.Utils
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static uint ReadUInt32LittleEndian(this ReadOnlySpan<byte> buffer, int startIndex)
-             => ReadUInt32LittleEndian(buffer[startIndex..]);
+            => ReadUInt32LittleEndian(buffer.Slice(startIndex));
 
         /// <summary>
         /// See <see cref="BinaryPrimitives.ReadUInt32LittleEndian(ReadOnlySpan{byte})"/>
@@ -36,7 +36,7 @@ namespace SharpSpades.Utils
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float ReadFloatLittleEndian(this ReadOnlySpan<byte> buffer, int startIndex)
-            => ReadFloatLittleEndian(buffer[startIndex..]);
+            => ReadFloatLittleEndian(buffer.Slice(startIndex));
 
         /// <summary>
         /// See <see cref="BinaryPrimitives.ReadSingleLittleEndian(ReadOnlySpan{byte})"/>
@@ -49,7 +49,7 @@ namespace SharpSpades.Utils
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 ReadPosition(this ReadOnlySpan<byte> buffer, int startIndex)
-            => ReadPosition(buffer[startIndex..]);
+            => ReadPosition(buffer.Slice(startIndex));
 
         public static Vector3 ReadPosition(this ReadOnlySpan<byte> buffer)
             => new(ReadFloatLittleEndian(buffer), ReadFloatLittleEndian(buffer, 1), ReadFloatLittleEndian(buffer, 2));
@@ -62,7 +62,7 @@ namespace SharpSpades.Utils
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Color ReadColor(this ReadOnlySpan<byte> buffer, int startIndex)
-            => ReadColor(buffer[startIndex..]);
+            => ReadColor(buffer.Slice(startIndex));
 
         /// <summary>
         /// Reads a color from the buffer in BGR byte order.
@@ -82,7 +82,7 @@ namespace SharpSpades.Utils
         /// <param name="startIndex"></param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void WriteUInt32LittleEndian(this Span<byte> buffer, uint i, int startIndex)
-            => WriteUInt32LittleEndian(buffer[startIndex..], i);
+            => WriteUInt32LittleEndian(buffer.Slice(startIndex), i);
 
         /// <summary>
         /// See <see cref="BinaryPrimitives.WriteUInt32LittleEndian(Span{byte}, uint)"/>
@@ -101,7 +101,7 @@ namespace SharpSpades.Utils
         /// <param name="startIndex"></param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void WriteFloatLittleEndian(this Span<byte> buffer, float f, int startIndex)
-            => WriteFloatLittleEndian(buffer[startIndex..], f);
+            => WriteFloatLittleEndian(buffer.Slice(startIndex), f);
 
         /// <summary>
         /// See <see cref="BinaryPrimitives.WriteSingleLittleEndian(Span{byte}, float)"/>
@@ -114,7 +114,7 @@ namespace SharpSpades.Utils
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void WritePosition(this Span<byte> buffer, Vector3 vector, int startIndex)
-            => WritePosition(buffer[startIndex..], vector);
+            => WritePosition(buffer.Slice(startIndex), vector);
 
         public static void WritePosition(this Span<byte> buffer, Vector3 vector)
         {
@@ -131,7 +131,7 @@ namespace SharpSpades.Utils
         /// <param name="color"></param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void WriteColor(this Span<byte> buffer, Color color, int startIndex)
-            => WriteColor(buffer[startIndex..], color);
+            => WriteColor(buffer.Slice(startIndex), color);
 
         /// <summary>
         /// Writes a color to the buffer in BGR byte order.

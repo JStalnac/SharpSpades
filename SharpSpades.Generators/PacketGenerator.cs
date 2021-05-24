@@ -148,9 +148,9 @@ namespace {cls.ContainingNamespace.ToDisplayString()}
                     sourceBuilder.AppendLine(fieldBuilder.ToString());
                 }
 
-            // Add packet length assertion
-            if (bufferIndex != -1)
-                sourceBuilder.Append($@"
+                // Add packet length assertion
+                if (bufferIndex != -1)
+                    sourceBuilder.Append($@"
 {indent}if (buffer.Length > {bufferIndex})
 {indent}{indent}throw new ArgumentException(""Packet is too long"");
 ");

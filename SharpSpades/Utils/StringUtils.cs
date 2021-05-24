@@ -51,7 +51,7 @@ namespace SharpSpades.Utils
         /// </summary>
         /// <param name="s">The string.</param>
         /// <returns></returns>
-        public static bool IsNullOrEmptyOrWhiteSpace(this string s) => string.IsNullOrEmpty(s) || string.IsNullOrWhiteSpace(s);
+        public static bool IsNullOrEmptyOrWhiteSpace(this string s) => String.IsNullOrEmpty(s) || String.IsNullOrWhiteSpace(s);
 
         /// <summary>
         /// Generates a standard message that can be used in the <see cref="ArgumentNullException"/> or <see cref="NullReferenceException"/>.

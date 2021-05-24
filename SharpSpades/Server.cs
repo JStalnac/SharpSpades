@@ -77,9 +77,11 @@ namespace SharpSpades
                 var logger = new LoggerConfiguration()
                     .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] [{SourceContext}] {Message:lj}{NewLine}{Exception}");
                 if (!String.IsNullOrEmpty(loggingConfig.LogFile))
+                {
                     logger.WriteTo.File(loggingConfig.LogFile,
                         rollingInterval: loggingConfig.RollDaily ? RollingInterval.Day : RollingInterval.Infinite,
                         shared: true, outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] [{SourceContext}] {Message:lj}{NewLine}{Exception}");
+                }
 
                 // Apply default log level
                 logger.MinimumLevel.Is(GetLevel(loggingConfig.Default) ?? LogEventLevel.Information);
@@ -201,16 +203,16 @@ namespace SharpSpades
 
                     Logger.LogInformation($"Client connected: {peer.RemoteEndPoint}");
 
-                    var client = new Client(this, peer, GetFreeId(this.Clients.Select(c => c.Value.Id).ToArray()));
-                    client.Disconnected += p => this.Clients.TryRemove(p, out _);
+                    var client = new Client(this, peer, GetFreeId(Clients.Select(c => c.Value.Id).ToArray()));
+                    client.Disconnected += p => Clients.TryRemove(p, out _);
 
                     Clients.TryAdd(peer, client);
 
                     _ = Task.Run(client.StartAsync).ContinueWith(t =>
                             Logger.LogError(t.Exception, "An exception occured in a client thread"),
-                            TaskContinuationOptions.OnlyOnFaulted);
+                        TaskContinuationOptions.OnlyOnFaulted);
 
-                    Logger.LogDebug("Clients connected: {0}", this.Clients.Count);
+                    Logger.LogDebug("Clients connected: {0}", Clients.Count);
                 }
             }
             catch (OperationCanceledException)
@@ -302,7 +304,7 @@ namespace SharpSpades
 
             byte id = 0;
 
-            foreach (var lowest in inUse)
+            foreach (byte lowest in inUse)
             {
                 for (; id <= lowest; id++)
                 {

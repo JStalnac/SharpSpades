@@ -7,7 +7,7 @@ namespace SharpSpades.Net.Packets.State
     public sealed partial class MapStart : Packet
     {
         public override byte Id => 18;
-        
+
         public override int Length => sizeof(uint);
 
         [Field(0)]
@@ -15,7 +15,10 @@ namespace SharpSpades.Net.Packets.State
 
         public MapStart() { }
 
-        public MapStart(uint mapSize) => this.MapSize = mapSize;
+        public MapStart(uint mapSize)
+        {
+            MapSize = mapSize;
+        }
 
         internal override Task HandleAsync(Client client) => Task.CompletedTask;
     }

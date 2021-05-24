@@ -23,7 +23,7 @@ namespace SharpSpades.Net
 
         public string? Name
         {
-            get => this.name;
+            get => name;
             internal set
             {
                 Throw.IfNull(value, nameof(value));
@@ -32,11 +32,11 @@ namespace SharpSpades.Net
                 if (!NameUtils.IsValidName(value))
                     throw new ArgumentException($"Invalid name in \"{value}\"");
 
-                this.name = value;
+                name = value;
             }
         }
 
-        public bool IsInLimbo => this.Name is null;
+        public bool IsInLimbo => Name is null;
 
         public Server Server { get; }
 
@@ -57,12 +57,12 @@ namespace SharpSpades.Net
             Throw.IfNull(peer, nameof(peer));
             Throw.IfNull(server, nameof(server));
 
-            this.Server = server;
+            Server = server;
             this.peer = peer;
-            this.Logger = server.GetLogger<Client>();
-            this.Id = id;
+            Logger = server.GetLogger<Client>();
+            Id = id;
 
-            this.AddPackets();
+            AddPackets();
         }
 
         internal async Task StartAsync()
@@ -70,7 +70,7 @@ namespace SharpSpades.Net
             // We will get stuck in peer.ReceiveAsync if the peer disconnects.
             _ = peer.Disconnection.ContinueWith(_ =>
             {
-                this.Logger.LogInformation("#{0}: Disconnecting...", this.Id);
+                Logger.LogInformation("#{0}: Disconnecting...", Id);
                 cts.Cancel();
             });
 
@@ -78,18 +78,18 @@ namespace SharpSpades.Net
             {
                 await peer.Connection;
 
-                this.Logger.LogInformation("#{0}: Connected", this.Id);
+                Logger.LogInformation("#{0}: Connected", Id);
 
                 var cancellationToken = cts.Token;
 
-                this.Logger.LogDebug("Sending map data to #{0}", this.Id);
-                await this.SendMapAsync();
-                this.Logger.LogDebug("Done sending map data to #{0}", this.Id);
+                Logger.LogDebug("Sending map data to #{0}", Id);
+                await SendMapAsync();
+                Logger.LogDebug("Done sending map data to #{0}", Id);
 
-                await this.SendPlayersAsync();
+                await SendPlayersAsync();
 
                 // Send state
-                await this.SendPacketAsync(new StateData
+                await SendPacketAsync(new StateData
                 {
                     PlayerId = Id,
                     BlueColor = Color.Blue,
@@ -111,11 +111,11 @@ namespace SharpSpades.Net
 
                     if (packets.TryGetValue(packetId, out var packet))
                     {
-                        this.Logger.LogTrace("#{0}: Received {1} ({2})\n{3}",
-                                             this.Id,
-                                             packet.GetType().Name,
-                                             packetId,
-                                             HexDump.Create(rawPacket.Data.Span).TrimEnd());
+                        Logger.LogTrace("#{0}: Received {1} ({2})\n{3}",
+                            Id,
+                            packet.GetType().Name,
+                            packetId,
+                            HexDump.Create(rawPacket.Data.Span).TrimEnd());
 
                         try
                         {
@@ -124,11 +124,11 @@ namespace SharpSpades.Net
                         }
                         catch (Exception ex)
                         {
-                            this.Logger.LogWarning(ex, "#{0}: Failed to process {1} ({2})", this.Id, packet.GetType().Name, packetId);
+                            Logger.LogWarning(ex, "#{0}: Failed to process {1} ({2})", Id, packet.GetType().Name, packetId);
                         }
                     }
                     else
-                        this.Logger.LogDebug("#{0}: Received packet with unknown id {1}", this.Id, packetId);
+                        Logger.LogDebug("#{0}: Received packet with unknown id {1}", Id, packetId);
                 }
             }
             catch (ENetAsyncPeerDisconnectedException)
@@ -138,7 +138,7 @@ namespace SharpSpades.Net
             catch (OperationCanceledException) { }
             finally
             {
-                this.Logger.LogInformation("#{0}: Disconnected", this.Id);
+                Logger.LogInformation("#{0}: Disconnected", Id);
                 Disconnected?.Invoke(peer);
             }
         }
@@ -148,26 +148,20 @@ namespace SharpSpades.Net
             // 8 kb
             const int ChunkSize = 8192;
 
-            Map map = this.Server.World!.Map;
+            Map map = Server.World!.Map;
 
             int dataLength = map.RawData.Length;
-            ReadOnlyMemory<byte> data = map.RawData.AsMemory();
+            var data = map.RawData.AsMemory();
 
             // Send Map Start
-            await this.SendPacketAsync(new MapStart
-            {
-                MapSize = unchecked((uint)dataLength)
-            });
+            await SendPacketAsync(new MapStart { MapSize = unchecked((uint)dataLength) });
 
             // Send Map Chunks
             do
             {
                 int count = data.Length < ChunkSize ? data.Length : ChunkSize;
 
-                await this.SendPacketAsync(new MapChunk
-                {
-                    MapData = data.Slice(0, count)
-                });
+                await SendPacketAsync(new MapChunk { MapData = data.Slice(0, count) });
 
                 data = data[count..];
             } while (data.Length > 0);
@@ -176,22 +170,23 @@ namespace SharpSpades.Net
         private async Task SendPlayersAsync()
         {
             var random = new Random();
-            foreach (var client in this.Server.Clients.Values)
+            foreach (var client in Server.Clients.Values)
             {
                 // WIP
 
                 // if (client.Player is not null)
                 // {
-                    await this.SendPacketAsync(new ExistingPlayer
-                    {
-                        PlayerId = 1,
-                        Team = TeamType.Blue,
-                        Weapon = WeaponType.Rifle,
-                        HeldItem = 2,
-                        Kills = 0,
-                        Color = Color.FromArgb(random.Next()),
-                        Name = $"Deuce {client.Id}"
-                    });
+                await SendPacketAsync(new ExistingPlayer
+                {
+                    PlayerId = 1,
+                    Team = TeamType.Blue,
+                    Weapon = WeaponType.Rifle,
+                    HeldItem = 2,
+                    Kills = 0,
+                    Color = Color.FromArgb(random.Next()),
+                    Name = $"Deuce {client.Id}"
+                });
+
                 // }
             }
         }
@@ -206,7 +201,7 @@ namespace SharpSpades.Net
             byte[] buffer = ArrayPool<byte>.Shared.Rent(length);
 
             // Limit the length of the buffer
-            Memory<byte> memory = ((Memory<byte>)buffer).Slice(0, length);
+            var memory = ((Memory<byte>)buffer).Slice(0, length);
 
             try
             {
@@ -217,7 +212,7 @@ namespace SharpSpades.Net
                 }
                 catch (Exception ex)
                 {
-                    this.Logger.LogError(ex, "#{0}: Failed to write {1}", this.Id, packet.GetType().Name);
+                    Logger.LogError(ex, "#{0}: Failed to write {1}", Id, packet.GetType().Name);
                     return;
                 }
 
@@ -225,15 +220,17 @@ namespace SharpSpades.Net
                 await peer.SendAsync(0, memory, ENetPacketFlags.Reliable);
 
                 if (packet is not MapChunk)
-                    this.Logger.LogTrace("#{0}: Sent {1} ({2})\n{3}",
-                                         this.Id,
-                                         packet.GetType().Name,
-                                         packet.Id,
-                                         HexDump.Create(memory.Span).TrimEnd());
+                {
+                    Logger.LogTrace("#{0}: Sent {1} ({2})\n{3}",
+                        Id,
+                        packet.GetType().Name,
+                        packet.Id,
+                        HexDump.Create(memory.Span).TrimEnd());
+                }
             }
             catch (Exception ex)
             {
-                this.Logger.LogError(ex, "#{0} Failed to send {1}", this.Id, packet.GetType().Name);
+                Logger.LogError(ex, "#{0} Failed to send {1}", Id, packet.GetType().Name);
                 throw;
             }
             finally
@@ -246,13 +243,16 @@ namespace SharpSpades.Net
         /// Disconnects the client.
         /// </summary>
         /// <param name="reason"></param>
-        public async Task DisconnectAsync(DisconnectReason reason) => await this.peer.DisconnectAsync((uint)reason);
+        public async Task DisconnectAsync(DisconnectReason reason) => await peer.DisconnectAsync((uint)reason);
 
         private void AddPackets()
         {
             AddPacket(new ExistingPlayer());
 
-            void AddPacket(Packet packet) => this.packets.Add(packet.Id, packet);
+            void AddPacket(Packet packet)
+            {
+                packets.Add(packet.Id, packet);
+            }
         }
     }
 }

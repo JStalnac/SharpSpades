@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace SharpSpades.Cli
 {
-    class Program
+    internal class Program
     {
-        static async Task Main(string[] args)
+        private static async Task Main(string[] args)
         {
             try
             {

@@ -11,16 +11,19 @@ namespace SharpSpades.Utils
         private readonly ConcurrentBag<T> pool = new();
         private readonly Func<T> initializer;
 
-        public ObjectPool(Func<T> initializer) => this.initializer = initializer;
+        public ObjectPool(Func<T> initializer)
+        {
+            this.initializer = initializer;
+        }
 
         public T Get()
         {
-            if (pool.TryTake(out T o))
+            if (pool.TryTake(out var o))
                 return o;
 
             return initializer();
         }
 
-        public void Return(T obj) => this.pool.Add(obj);
+        public void Return(T obj) => pool.Add(obj);
     }
 }

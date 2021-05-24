@@ -2,8 +2,8 @@ using System;
 
 namespace SharpSpades.Net.Packets.Attributes
 {
-    [System.AttributeUsage(System.AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
-    internal sealed class FieldAttribute : System.Attribute
+    [AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
+    internal sealed class FieldAttribute : Attribute
     {
         public int Index { get; }
 

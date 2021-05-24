@@ -37,7 +37,7 @@ namespace SharpSpades.Net.Packets
         [Length(16)]
         public string Name
         {
-            get => this.name ?? throw new InvalidOperationException("Name must not be null");
+            get => name ?? throw new InvalidOperationException("Name must not be null");
             set
             {
                 Throw.IfNull(value, nameof(value));
@@ -45,7 +45,7 @@ namespace SharpSpades.Net.Packets
                 if (!NameUtils.IsValidName(value))
                     throw new ArgumentException("Invalid name");
 
-                this.name = value;
+                name = value;
             }
         }
 
@@ -53,9 +53,9 @@ namespace SharpSpades.Net.Packets
 
         internal override async Task HandleAsync(Client client)
         {
-            client.Name = this.Name;
-            client.Server.World.AddEntity(new Player(client));
-            
+            client.Name = Name;
+            client.Server.World!.AddEntity(new Player(client));
+
             await client.SendPacketAsync(this);
         }
     }
