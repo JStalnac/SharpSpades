@@ -9,6 +9,11 @@ namespace SharpSpades.Entities
         public Vector3 Position { get; set; }
         public Quaternion Rotation { get; set; }
 
-        internal virtual Task UpdateAsync(float delta) => Task.CompletedTask;
+        public virtual void Remove()
+        {
+            World.RemoveEntity(this);
+        }
+
+        internal virtual Task UpdateAsync() => Task.CompletedTask;
     }
 }

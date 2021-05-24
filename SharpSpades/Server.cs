@@ -38,7 +38,7 @@ namespace SharpSpades
         public Server(string configurationDirectory)
         {
             Throw.IfNull(configurationDirectory, nameof(configurationDirectory));
-            
+
             RootDirectory = Path.IsPathRooted(configurationDirectory)
                 ? configurationDirectory
                 : Path.Combine(Directory.GetCurrentDirectory(), configurationDirectory);
@@ -46,7 +46,7 @@ namespace SharpSpades
             // Create the config file
             string configFile = Path.Combine(RootDirectory, "config.toml");
             if (!File.Exists(configFile))
-                Toml.WriteFile<ServerConfiguration>(new(), configFile);
+                Toml.WriteFile<ServerConfiguration>(new ServerConfiguration(), configFile);
 
             try
             {
@@ -69,7 +69,7 @@ namespace SharpSpades
             catch (Exception ex)
             {
                 Console.WriteLine($"Failed to load logging config. Using default logging config. Exception:\n{ex}");
-                loggingConfig = new();
+                loggingConfig = new LoggingConfiguration();
             }
 
             LoggerFactory = Microsoft.Extensions.Logging.LoggerFactory.Create(c =>
@@ -77,10 +77,9 @@ namespace SharpSpades
                 var logger = new LoggerConfiguration()
                     .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] [{SourceContext}] {Message:lj}{NewLine}{Exception}");
                 if (!String.IsNullOrEmpty(loggingConfig.LogFile))
-                {
-                    logger.WriteTo.File(path: loggingConfig.LogFile, rollingInterval: loggingConfig.RollDaily ? RollingInterval.Day : RollingInterval.Infinite,
-                            shared: true, outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] [{SourceContext}] {Message:lj}{NewLine}{Exception}");
-                }
+                    logger.WriteTo.File(loggingConfig.LogFile,
+                        rollingInterval: loggingConfig.RollDaily ? RollingInterval.Day : RollingInterval.Infinite,
+                        shared: true, outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] [{SourceContext}] {Message:lj}{NewLine}{Exception}");
 
                 // Apply default log level
                 LogEventLevel level;
@@ -107,7 +106,7 @@ namespace SharpSpades
 
                 c.AddSerilog(logger.CreateLogger(), true);
             });
-            
+
             Logger = LoggerFactory.CreateLogger<Server>();
         }
 
@@ -148,7 +147,7 @@ namespace SharpSpades
             sw.Stop();
 
             Logger.LogInformation("Loaded map (Took {0:0.00} s)", sw.Elapsed.TotalSeconds);
-            
+
             // Load ENet
             if (!ManagedENet.Started)
             {
@@ -175,22 +174,25 @@ namespace SharpSpades
                 Logger.LogCritical(ex, "Failed to create host");
                 return;
             }
-            
+
             // Important for the clients to be able to connect
             host.CompressWithRangeCoder();
 
             Logger.LogInformation("Starting host");
             await host.StartAsync();
-            
+
             Logger.LogInformation("Ready");
             Logger.LogDebug($"Listening on port {port}");
+
+            // TODO: Find a better place for this
+            _ = Task.Run(ServerLoop);
 
             try
             {
                 while (!cts.IsCancellationRequested)
                 {
-                    var peer = await host.AcceptAsync(cts.Token);
-                    
+                    ENetAsyncPeer peer = await host.AcceptAsync(cts.Token);
+
                     // Only v0.75 is supported
                     if (peer.ConnectData != 3)
                     {
@@ -207,17 +209,15 @@ namespace SharpSpades
                     }
 
                     Logger.LogInformation($"Client connected: {peer.RemoteEndPoint}");
-                    
+
                     byte id = GetFreeId(Clients.Select(c => c.Value.Id).ToArray());
-                    
+
                     var client = new Client(this, peer, id);
                     client.Disconnected += p => Clients.TryRemove(p, out _);
                     Clients.TryAdd(peer, client);
                     _ = Task.Run(client.StartAsync)
-                        .ContinueWith(t =>
-                        {
-                            Logger.LogError(t.Exception, "An exception occured in a client thread");
-                        }, TaskContinuationOptions.OnlyOnFaulted);
+                        .ContinueWith(t => { Logger.LogError(t.Exception, "An exception occured in a client thread"); },
+                            TaskContinuationOptions.OnlyOnFaulted);
 
                     Logger.LogDebug("Clients connected: {0}", Clients.Count);
                 }
@@ -236,7 +236,7 @@ namespace SharpSpades
                     cts.Cancel();
 
                 // TODO: Disconnect clients
-                
+
                 Logger.LogDebug("Stopping host");
                 await host.FlushAsync();
                 Logger.LogDebug("All packets flushed");
@@ -265,7 +265,43 @@ namespace SharpSpades
         {
             // Bad
             using (var fs = new FileStream(name, FileMode.Open))
-                World = new World(Map.Load(fs));
+                World = new World(Map.Load(fs), GetLogger<World>());
+        }
+
+        private async Task ServerLoop()
+        {
+            Logger.LogDebug("Starting server loop");
+
+            float tps = Configuration.GetValue<float>("Tps");
+
+            // Milliseconds per tick
+            var mspt = TimeSpan.FromMilliseconds(1000f / tps);
+
+            var nextTick = TimeSpan.Zero;
+            var sw = Stopwatch.StartNew();
+
+            while (!cts.IsCancellationRequested)
+            {
+                try
+                {
+                    await World!.UpdateAsync();
+
+                    nextTick = nextTick.Add(mspt);
+
+                    // Sleep until it's time to process a new tick
+                    var elapsed = sw.Elapsed;
+                    if (elapsed < nextTick)
+                        await Task.Delay(nextTick - elapsed);
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex, "Error in server loop");
+                }
+            }
+
+            sw.Stop();
+
+            Logger.LogDebug("Server loop stopped");
         }
 
         internal static byte GetFreeId(byte[] inUse)

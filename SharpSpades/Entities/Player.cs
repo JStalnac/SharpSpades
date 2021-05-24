@@ -13,9 +13,9 @@ namespace SharpSpades.Entities
             Client = client;
         }
 
-        internal override Task UpdateAsync(float delta)
+        internal override Task UpdateAsync()
         {
-            return base.UpdateAsync(delta);
+            return base.UpdateAsync();
         }
     }
 }
