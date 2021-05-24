@@ -17,6 +17,7 @@ namespace SharpSpades.Tests
         [Theory]
         [InlineData("Null\x0")]
         [InlineData("123456789ABCDEF1")]
+        [InlineData("")]
         public void TestInvalid(string name)
         {
             Assert.False(NameUtils.IsValidName(name));

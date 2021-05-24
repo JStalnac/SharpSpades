@@ -37,10 +37,12 @@ namespace SharpSpades.Net.Packets
             {
                 Throw.IfNull(value, nameof(value));
 
-                if (!NameUtils.IsValidName(value))
+                string clean = value.TrimEnd('\x0');
+                
+                if (!NameUtils.IsValidName(clean))
                     throw new ArgumentException("Invalid name");
 
-                name = value;
+                name = clean;
             }
         }
 
