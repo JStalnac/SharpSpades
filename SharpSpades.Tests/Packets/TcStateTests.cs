@@ -1,13 +1,22 @@
 ﻿using SharpSpades.Net.Packets.State;
+using SharpSpades.Utils;
 using System;
 using System.Collections.Immutable;
 using System.Numerics;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace SharpSpades.Tests.Packets
 {
     public class TcStateTests
     {
+        private readonly ITestOutputHelper output;
+
+        public TcStateTests(ITestOutputHelper output)
+        {
+            this.output = output;
+        }
+
         [Fact]
         public void Test_Write()
         {
@@ -72,8 +81,10 @@ namespace SharpSpades.Tests.Packets
                 0x02
             };
 
-            // Console.WriteLine(HexDump.Create(expected));
-            // Console.WriteLine(HexDump.Create(buffer));
+            output.WriteLine("Expected:");
+            output.WriteLine(HexDump.Create(expected));
+            output.WriteLine("Actual:");
+            output.WriteLine(HexDump.Create(buffer));
 
             Assert.Equal(expected, buffer.ToArray());
         }

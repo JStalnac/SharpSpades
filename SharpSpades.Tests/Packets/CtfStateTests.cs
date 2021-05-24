@@ -1,12 +1,21 @@
 ﻿using SharpSpades.Net.Packets.State;
+using SharpSpades.Utils;
 using System;
 using System.Numerics;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace SharpSpades.Tests.Packets
 {
     public class CtfStateTests
     {
+        private readonly ITestOutputHelper output;
+        
+        public CtfStateTests(ITestOutputHelper output)
+        {
+            this.output = output;
+        }
+
         [Fact]
         public void Test_Write()
         {
@@ -83,8 +92,10 @@ namespace SharpSpades.Tests.Packets
                 0x00, 0x00, 0xA0, 0x41
             };
 
-            // Console.WriteLine(HexDump.Create(expected));
-            // Console.WriteLine(HexDump.Create(buffer));
+            output.WriteLine("Expected:");
+            output.WriteLine(HexDump.Create(expected));
+            output.WriteLine("Actual:");
+            output.WriteLine(HexDump.Create(buffer));
 
             Assert.Equal(expected, buffer.ToArray());
         }

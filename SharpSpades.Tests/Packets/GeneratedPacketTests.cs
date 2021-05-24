@@ -61,7 +61,9 @@ namespace SharpSpades.Tests.Packets
                 0x44, 0x65, 0x75, 0x63, 0x65
             };
 
+            output.WriteLine("Expected:");
             output.WriteLine(HexDump.Create(expected));
+            output.WriteLine("Actual:");
             output.WriteLine(HexDump.Create(buffer));
             
             Assert.Equal(expected, buffer);

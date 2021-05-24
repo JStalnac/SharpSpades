@@ -1,12 +1,21 @@
 using SharpSpades.Net.Packets.State;
+using SharpSpades.Utils;
 using System;
 using System.Drawing;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace SharpSpades.Tests.Packets
 {
     public class StateDataTests
     {
+        private readonly ITestOutputHelper output;
+        
+        public StateDataTests(ITestOutputHelper output)
+        {
+            this.output = output;
+        }
+
         [Fact]
         public void Test_Set_BlueName()
         {
@@ -75,8 +84,10 @@ namespace SharpSpades.Tests.Packets
                 //#endregion
             };
 
-            // Console.WriteLine(HexDump.Create(expected));
-            // Console.WriteLine(HexDump.Create(buffer));
+            output.WriteLine("Expected:");
+            output.WriteLine(HexDump.Create(expected));
+            output.WriteLine("Actual:");
+            output.WriteLine(HexDump.Create(buffer));
 
             Assert.Equal(expected, buffer.ToArray());
         }
