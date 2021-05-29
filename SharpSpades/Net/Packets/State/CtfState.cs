@@ -57,7 +57,7 @@ namespace SharpSpades.Net.Packets.State
             if (IsHeld)
             {
                 buffer[0] = Holder;
-                buffer[1..].Fill(0);
+                buffer.Slice(1).Fill(0);
             }
             else
                 buffer.WritePosition(Position);

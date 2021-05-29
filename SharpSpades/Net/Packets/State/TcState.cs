@@ -29,13 +29,13 @@ namespace SharpSpades.Net.Packets.State
         {
             buffer[0] = (byte)Territories.Length;
 
-            var span = buffer[1..];
+            var span = buffer.Slice(1);
 
             foreach (var t in territories)
             {
                 span.WritePosition(t.Position);
                 span[12] = (byte)t.State;
-                span = span[13..];
+                span = span.Slice(13);
             }
         }
     }

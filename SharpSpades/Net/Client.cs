@@ -119,7 +119,7 @@ namespace SharpSpades.Net
 
                         try
                         {
-                            packet.Read(rawPacket.Data.Span[1..]);
+                            packet.Read(rawPacket.Data.Span.Slice(1));
                             await packet.HandleAsync(this);
                         }
                         catch (Exception ex)
@@ -163,7 +163,7 @@ namespace SharpSpades.Net
 
                 await SendPacketAsync(new MapChunk { MapData = data.Slice(0, count) });
 
-                data = data[count..];
+                data = data.Slice(count);
             } while (data.Length > 0);
         }
 
@@ -208,7 +208,7 @@ namespace SharpSpades.Net
                 try
                 {
                     memory.Span[0] = packet.Id;
-                    packet.Write(memory.Span[1..]);
+                    packet.Write(memory.Span.Slice(1));
                 }
                 catch (Exception ex)
                 {

@@ -101,12 +101,12 @@ namespace SharpSpades.Net.Packets.State
             if (State is CtfState ctf)
             {
                 buffer[30] = 0;
-                ctf.WriteTo(buffer[31..]);
+                ctf.WriteTo(buffer.Slice(31));
             }
             else if (State is TcState tc)
             {
                 buffer[30] = 1;
-                tc.WriteTo(buffer[31..]);
+                tc.WriteTo(buffer.Slice(31));
             }
             else
                 throw new InvalidOperationException("This was not supposed to happen :(");
