@@ -23,7 +23,7 @@ at other files in the project for reference for code style etc.
 
 ### Things to work on
  - [ ] Physics
-   - [ ] Players
+   - [ ] Players (See branch `physics-player`)
      - [ ] Tests
    - [ ] Grenades
      - [ ] Tests
