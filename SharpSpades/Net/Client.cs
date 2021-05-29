@@ -172,22 +172,19 @@ namespace SharpSpades.Net
             var random = new Random();
             foreach (var client in Server.Clients.Values)
             {
-                // WIP
-
-                // if (client.Player is not null)
-                // {
+                if (client.Name is null)
+                    continue;
+                
                 await SendPacketAsync(new ExistingPlayer
                 {
-                    PlayerId = 1,
+                    PlayerId = client.Id,
                     Team = TeamType.Blue,
                     Weapon = WeaponType.Rifle,
                     HeldItem = 2,
                     Kills = 0,
                     Color = Color.FromArgb(random.Next()),
-                    Name = $"Deuce {client.Id}"
+                    Name = client.Name
                 });
-
-                // }
             }
         }
 
@@ -248,6 +245,8 @@ namespace SharpSpades.Net
         private void AddPackets()
         {
             AddPacket(new ExistingPlayer());
+            AddPacket(new InputData());
+            AddPacket(new OrientationData());
 
             void AddPacket(Packet packet)
             {
