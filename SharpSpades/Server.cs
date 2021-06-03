@@ -277,7 +277,7 @@ namespace SharpSpades
             {
                 try
                 {
-                    await World!.UpdateAsync();
+                    await World!.UpdateAsync((float)mspt.TotalSeconds);
 
                     nextTick = nextTick.Add(mspt);
 
