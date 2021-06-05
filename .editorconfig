@@ -8,6 +8,9 @@ insert_final_newline = false
 indent_style = space
 indent_size = 4
 
+[*.csproj]
+indent_size = 2
+
 [*.cs]
 # Microsoft .NET properties
 csharp_space_after_cast = false
