@@ -3,7 +3,7 @@
   <metadata>
     <id>SharpSpades.Native</id>
     <version>1.0.0</version>
-    <authors>Piqueserver contributors</authors>
+    <authors>Piqueserver and libvxl contributors</authors>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>Native library for SharpSpades</description>
   </metadata>
