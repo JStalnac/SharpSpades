@@ -16,6 +16,6 @@ namespace SharpSpades.Entities
             World.RemoveEntity(this);
         }
 
-        internal virtual Task UpdateAsync() => Task.CompletedTask;
+        internal virtual Task UpdateAsync(float delta) => Task.CompletedTask;
     }
 }
