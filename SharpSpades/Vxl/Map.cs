@@ -3,8 +3,6 @@ using SharpCompress.Compressors.Deflate;
 using SharpSpades.Native;
 using System;
 using System.IO;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 
 namespace SharpSpades.Vxl
 {
@@ -16,6 +14,11 @@ namespace SharpSpades.Vxl
         private Map(IntPtr nativeHandle)
         {
             NativeHandle = nativeHandle;
+        }
+
+        internal void Free()
+        {
+            LibVxl.libvxl_free(NativeHandle);
         }
 
         public static Map Load(string path)
