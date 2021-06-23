@@ -150,11 +150,10 @@ namespace SharpSpades.Net
 
             Map map = Server.World!.Map;
 
-            int dataLength = map.RawData.Length;
-            var data = map.RawData.AsMemory();
+            var data = map.RawData;
 
             // Send Map Start
-            await SendPacketAsync(new MapStart { MapSize = unchecked((uint)dataLength) });
+            await SendPacketAsync(new MapStart { MapSize = unchecked((uint)map.RawData.Length) });
 
             // Send Map Chunks
             do

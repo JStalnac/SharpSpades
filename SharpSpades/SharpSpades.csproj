@@ -3,11 +3,10 @@
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
     <LangVersion>9.0</LangVersion>
-    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\SharpSpades.Vxl\SharpSpades.Vxl.csproj" />
     <ProjectReference Include="..\SharpSpades.Generators\SharpSpades.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
   
@@ -28,6 +27,7 @@
     <PackageReference Include="Serilog.Sinks.Console" Version="3.1.1" />
     <PackageReference Include="Serilog.Sinks.File" Version="4.1.0" />
     <PackageReference Include="Nett" Version="0.15.0" />
+    <PackageReference Include="SharpCompress" Version="0.28.3" />
     <PackageReference Include="SharpSpades.Native" Version="1.0.0" />
   </ItemGroup>
 
