@@ -106,16 +106,15 @@ namespace SharpSpades.Net
                     byte packetId = rawPacket.Data.Span[0];
 
                     // Movement packets
-                    if (packetId is 0 or 1 or 3)
-                        continue;
-
+                    
                     if (packets.TryGetValue(packetId, out var packet))
                     {
-                        Logger.LogTrace("#{0}: Received {1} ({2})\n{3}",
-                            Id,
-                            packet.GetType().Name,
-                            packetId,
-                            HexDump.Create(rawPacket.Data.Span).TrimEnd());
+                        if (packetId is not 0 or 1 or 3)
+                            Logger.LogTrace("#{0}: Received {1} ({2})\n{3}",
+                                Id,
+                                packet.GetType().Name,
+                                packetId,
+                                HexDump.Create(rawPacket.Data.Span).TrimEnd());
 
                         try
                         {

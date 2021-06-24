@@ -17,7 +17,7 @@ namespace SharpSpades.Net.Packets
 
         internal override Task HandleAsync(Client client)
         {
-            if (client.Player is not null)
+            if (!client.IsInLimbo)
                 client.Player.InputState = InputState;
             return Task.CompletedTask;
 

@@ -7,15 +7,15 @@ namespace SharpSpades.Entities
     {
         public World World { get; internal set; }
 
-        public Vector3 Position { get; set; }
+        public virtual Vector3 Position { get; set; }
 
-        public Quaternion Rotation { get; set; }
+        public virtual Vector3 Rotation { get; set; }
 
         public virtual void Remove()
         {
             World.RemoveEntity(this);
         }
 
-        internal virtual Task UpdateAsync(float delta) => Task.CompletedTask;
+        internal virtual Task UpdateAsync(float delta, float time) => Task.CompletedTask;
     }
 }

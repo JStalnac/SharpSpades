@@ -4,12 +4,12 @@ using System.Threading.Tasks;
 
 namespace SharpSpades.Net.Packets
 {
-    [ReadOnly]
-    public sealed partial class OrientationData : Packet
+    public partial class PositionData : Packet
     {
-        public override byte Id => 1;
+        public override byte Id => 0;
         public override int Length => 12;
-        
+
+        // TODO: Check NaN
         [Field(0)]
         public float X { get; set; }
         [Field(1)]
@@ -17,11 +17,16 @@ namespace SharpSpades.Net.Packets
         [Field(2)]
         public float Z { get; set; }
 
-        internal override Task HandleAsync(Client client)
+        public PositionData() { }
+
+        public PositionData(Vector3 position)
         {
-            if (!client.IsInLimbo)
-                client.Player.Rotation = new Vector3(X, Y, Z);
-            return Task.CompletedTask;
+            X = position.X;
+            Y = position.Y;
+            Z = position.Z;
         }
+
+        internal override Task HandleAsync(Client client)
+            => Task.CompletedTask;
     }
 }

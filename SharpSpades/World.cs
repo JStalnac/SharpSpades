@@ -55,14 +55,14 @@ namespace SharpSpades
         public ImmutableArray<Entity> GetEntities()
             => Entities.ToImmutableArray();
 
-        internal async Task UpdateAsync(float delta)
+        internal async Task UpdateAsync(float delta, float time)
         {
             logger.LogTrace("Beginning world update");
             var start = DateTime.Now;
 
             IEnumerable<Task> tasks;
             lock (entityLock)
-                tasks = Entities.Select(e => e.UpdateAsync(delta)).ToArray();
+                tasks = Entities.Select(e => e.UpdateAsync(delta, time)).ToArray();
 
             await Task.WhenAll(tasks);
 

@@ -3,6 +3,7 @@ using SharpSpades.Net.Packets.Attributes;
 using SharpSpades.Utils;
 using System;
 using System.Drawing;
+using System.Numerics;
 using System.Threading.Tasks;
 
 namespace SharpSpades.Net.Packets
@@ -55,11 +56,21 @@ namespace SharpSpades.Net.Packets
 
         internal override async Task HandleAsync(Client client)
         {
+            var position = new Vector3(100f, 150f, 20f);
+
             client.Name = Name;
-            client.Server.World!.AddEntity(new Player(client));
+            var player = new Player(client)
+            {
+                Position = position
+            };
+
+            client.Player = player;
+            client.Server.World!.AddEntity(player);
 
             foreach (var c in client.Server.Clients.Values)
                 await c.SendPacketAsync(this);
+
+            await client.SendPacketAsync(new PositionData(position));
         }
     }
 }
