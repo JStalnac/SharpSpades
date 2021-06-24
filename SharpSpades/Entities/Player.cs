@@ -41,7 +41,6 @@ namespace SharpSpades.Entities
             }
             set
             {
-                Logger.LogInformation("Updating input state");
                 NativePlayer->Forward = value.HasFlag(InputState.Up) ? 1 : 0;
                 NativePlayer->Backward = value.HasFlag(InputState.Down) ? 1 : 0;
                 NativePlayer->Left = value.HasFlag(InputState.Left) ? 1 : 0;
@@ -124,7 +123,6 @@ namespace SharpSpades.Entities
         internal override Task UpdateAsync(float delta, float time)
         {
             LibSharpSpades.move_player(World.Map.NativeHandle, NativePlayer, delta, time);
-            Logger.LogInformation("{Pos}; {Rot}", Position, Rotation);
             return base.UpdateAsync(delta, time);
         }
     }
