@@ -3,6 +3,8 @@ using Moq;
 using SharpSpades.Entities;
 using SharpSpades.Vxl;
 using System;
+using System.Linq;
+using System.Reflection;
 using Xunit;
 
 namespace SharpSpades.Tests
@@ -10,7 +12,13 @@ namespace SharpSpades.Tests
     public class WorldTests
     {
         private static World CreateStubWorld()
-            => new(Mock.Of<Map>(), Mock.Of<ILogger<World>>());
+        {
+            var ctor = typeof(Map).GetConstructors(BindingFlags.NonPublic | BindingFlags.Instance)
+                .Where(x => x.GetParameters().Length == 1)
+                .First();
+            var map = ctor.Invoke(new [] { (object)IntPtr.Zero });
+            return new((Map)map, Mock.Of<ILogger<World>>());
+        }
 
         private static Entity CreateStubEntity()
             => Mock.Of<Entity>();
