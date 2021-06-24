@@ -18,7 +18,7 @@ namespace SharpSpades.Vxl
 
         internal void Free()
         {
-            LibVxl.libvxl_free(NativeHandle);
+            LibVxl.destroy_map(NativeHandle);
         }
 
         public static Map Load(string path)

@@ -18,6 +18,6 @@ namespace SharpSpades.Native
         public unsafe static extern void libvxl_write(IntPtr map, void* ptr, ref int size);
 
         [DllImport(LibraryName, CallingConvention = callingConvention)]
-        public static extern void libvxl_free(IntPtr map);
+        public static extern void destroy_map(IntPtr map);
     }
 }
