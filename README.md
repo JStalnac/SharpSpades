@@ -23,11 +23,7 @@ at other files in the project for reference for code style etc.
 
 ### Things to work on
  - [ ] Physics
-   - [ ] Players (See branch `physics-player`)
-     - [ ] Tests
    - [ ] Grenades
-     - [ ] Tests
- - [ ] Map serialization
 
 ### Project structure
 `SharpSpades` - The server itself, plugins will use this when implemented
@@ -35,5 +31,3 @@ at other files in the project for reference for code style etc.
 `SharpSpades.Cli` - A CLI for starting (and managing?) servers
 
 `SharpSpades.Tests` - Tests
-
-`SharpSpades.Vxl` - A map library for AoS
