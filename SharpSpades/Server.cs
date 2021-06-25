@@ -10,6 +10,7 @@ using SharpSpades.Utils;
 using SharpSpades.Vxl;
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -28,7 +29,7 @@ namespace SharpSpades
         public ILoggerFactory LoggerFactory { get; }
         public ILogger<Server> Logger { get; }
         public string RootDirectory { get; }
-        public ConcurrentDictionary<ENetAsyncPeer, Client> Clients { get; } = new();
+        public ConcurrentDictionary<byte, Client> Clients { get; } = new();
         public World? World { get; private set; }
 
         private volatile bool started;
@@ -180,6 +181,8 @@ namespace SharpSpades
             // TODO: Find a better place for this
             _ = Task.Run(ServerLoop);
 
+            var threads = new Dictionary<byte, Task>();
+
             try
             {
                 while (!cts.IsCancellationRequested)
@@ -191,26 +194,33 @@ namespace SharpSpades
                     {
                         await peer.DisconnectAsync((uint)DisconnectReason.WrongProtocolVersion);
                         Logger.LogInformation($"A client tried to connect with unsupported protocol version: {peer.ConnectData}");
-                        return;
+                        continue;
                     }
 
                     if (Clients.Count >= MaxPlayers)
                     {
                         await peer.DisconnectAsync((uint)DisconnectReason.ServerFull);
                         Logger.LogInformation("A client tried to connect but the server was full.");
-                        return;
+                        continue;
                     }
 
                     Logger.LogInformation($"Client connected: {peer.RemoteEndPoint}");
 
-                    var client = new Client(this, peer, GetFreeId(Clients.Select(c => c.Value.Id).ToArray()));
-                    client.Disconnected += p => Clients.TryRemove(p, out _);
+                    byte id = GetFreeId(Clients.Select(c => c.Value.Id).ToArray());
+                    var client = new Client(this, peer, id);
 
-                    Clients.TryAdd(peer, client);
+                    Clients.TryAdd(id, client);
 
-                    _ = Task.Run(client.StartAsync).ContinueWith(t =>
-                            Logger.LogError(t.Exception, "An exception occured in a client thread"),
-                        TaskContinuationOptions.OnlyOnFaulted);
+                    Logger.LogDebug("Client #{Id} started", id);
+                    threads.Add(id, Task.Run(client.StartAsync).ContinueWith(t =>
+                    {
+                        if (t.IsFaulted)
+                            Logger.LogError(t.Exception, "Client #{Id} stopped with exception", id);
+                        else
+                            Logger.LogDebug("Client #{Id} stopped.", id);
+                        threads.Remove(id);
+                        Clients.TryRemove(id, out var _);
+                    }));
 
                     Logger.LogDebug("Clients connected: {0}", Clients.Count);
                 }
@@ -228,7 +238,15 @@ namespace SharpSpades
                 if (!cts.IsCancellationRequested)
                     cts.Cancel();
 
-                // TODO: Disconnect clients
+                Logger.LogInformation("Disconnecting clients...");
+                
+                foreach (var client in Clients.Values)
+                    await client.DisconnectAsync(DisconnectReason.Undefined);
+                
+                foreach (var task in threads.Values)
+                    await task;
+                
+                Logger.LogInformation("All clients disconnected");
 
                 Logger.LogDebug("Stopping host");
                 await host.FlushAsync();
@@ -240,6 +258,9 @@ namespace SharpSpades
 
                 Logger.LogTrace("Disposing host");
                 host.Dispose();
+
+                Logger.LogTrace("Destroying map");
+                World!.Map.Free();
 
                 Logger.LogInformation("Server stopped");
             }

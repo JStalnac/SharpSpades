@@ -41,15 +41,14 @@ namespace SharpSpades.Net
         public Server Server { get; }
 
         public Player? Player { get; internal set; }
-
-        internal event Action<ENetAsyncPeer>? Disconnected;
+        
+        internal ENetAsyncPeer Peer { get; }
 
         private ILogger Logger { get; }
 
         private string? name;
         private readonly TaskCompletionSource<bool> DisconnectCompletionSource = new();
         private readonly CancellationTokenSource cts = new();
-        private readonly ENetAsyncPeer peer;
         private readonly Dictionary<byte, Packet> packets = new();
 
         public Client(Server server, ENetAsyncPeer peer, byte id)
@@ -58,7 +57,7 @@ namespace SharpSpades.Net
             Throw.IfNull(server, nameof(server));
 
             Server = server;
-            this.peer = peer;
+            Peer = peer;
             Logger = server.GetLogger<Client>();
             Id = id;
 
@@ -68,7 +67,7 @@ namespace SharpSpades.Net
         internal async Task StartAsync()
         {
             // We will get stuck in peer.ReceiveAsync if the peer disconnects.
-            _ = peer.Disconnection.ContinueWith(_ =>
+            _ = Peer.Disconnection.ContinueWith(_ =>
             {
                 Logger.LogInformation("#{0}: Disconnecting...", Id);
                 cts.Cancel();
@@ -76,7 +75,7 @@ namespace SharpSpades.Net
 
             try
             {
-                await peer.Connection;
+                await Peer.Connection;
 
                 Logger.LogInformation("#{0}: Connected", Id);
 
@@ -98,17 +97,16 @@ namespace SharpSpades.Net
                     State = new CtfState()
                 });
 
-                while (!cts.IsCancellationRequested && peer.IsConnected)
+                while (!cts.IsCancellationRequested && Peer.IsConnected)
                 {
-                    using var rawPacket = await peer.ReceiveAsync(cancellationToken);
+                    using var rawPacket = await Peer.ReceiveAsync(cancellationToken);
 
                     // Process packet
                     byte packetId = rawPacket.Data.Span[0];
 
-                    // Movement packets
-                    
                     if (packets.TryGetValue(packetId, out var packet))
                     {
+                        // Movement packets
                         if (packetId is not 0 or 1 or 3)
                             Logger.LogTrace("#{0}: Received {1} ({2})\n{3}",
                                 Id,
@@ -137,8 +135,12 @@ namespace SharpSpades.Net
             catch (OperationCanceledException) { }
             finally
             {
+                if (Player is not null)
+                {
+                    Logger.LogTrace("#{0}: Destroying player", Id);
+                    Player.Free();
+                }
                 Logger.LogInformation("#{0}: Disconnected", Id);
-                Disconnected?.Invoke(peer);
             }
         }
 
@@ -212,7 +214,7 @@ namespace SharpSpades.Net
                 }
 
                 // TODO: More packet flags
-                await peer.SendAsync(0, memory, ENetPacketFlags.Reliable);
+                await Peer.SendAsync(0, memory, ENetPacketFlags.Reliable);
 
                 if (packet is not MapChunk)
                 {
@@ -238,7 +240,7 @@ namespace SharpSpades.Net
         /// Disconnects the client.
         /// </summary>
         /// <param name="reason"></param>
-        public async Task DisconnectAsync(DisconnectReason reason) => await peer.DisconnectAsync((uint)reason);
+        public async Task DisconnectAsync(DisconnectReason reason) => await Peer.DisconnectAsync((uint)reason);
 
         private void AddPackets()
         {
