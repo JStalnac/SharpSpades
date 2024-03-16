@@ -1,0 +1,18 @@
+# Builds
+bin/
+obj/
+
+# IDE
+.idea/
+.vs/
+.vscode/
+*.user
+
+# Map files
+*.vxl
+
+# Logs and configs
+logs/
+config.json
+
+coverage.*
