@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\SharpSpades.Api\SharpSpades.Api.csproj" />
+    <ProjectReference Include="..\SharpSpades.Native\SharpSpades.Native.csproj" />
   </ItemGroup>
   
   <ItemGroup>
@@ -15,13 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="ENet.Managed">
-      <HintPath>../lib/ENet.Managed.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="ENet.Managed.Runtime" Version="1.3.17.1" />
+    <PackageReference Include="ENet.Managed" Version="4.2.6" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="6.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="6.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="6.0.0" />
@@ -29,7 +24,7 @@
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="6.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.0" />
     <PackageReference Include="SharpCompress" Version="0.30.0" />
-    <PackageReference Include="SharpSpades.Native" Version="2.1.0" />
+    <!--<PackageReference Include="SharpSpades.Native" Version="2.1.0" />-->
   </ItemGroup>
 
 </Project>
