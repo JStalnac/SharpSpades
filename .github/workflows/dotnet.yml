@@ -2,19 +2,37 @@ name: .NET
 on: [push, pull_request]
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  compile-native:
+    name: Compile native libraries
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
       
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v1
+      - name: Build
+        run: cd SharpSpades.Native && ./build.sh
+
+      - name: Upload libraries
+        uses: actions/upload-artifact@v4
         with:
-          dotnet-version: 8.0.x
+          name: native-libraries
+          path: SharpSpades.Native/build/**/*
+
+  build:
+    name: .NET Build
+    runs-on: ubuntu-22.04
+    needs: compile-native
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download native libraries
+        uses: actions/download-artifact@v4
+        with:
+          name: native-libraries
+          path: SharpSpades.Native/build
       
       - name: Restore dependencies
         run: dotnet restore
-      
+
       - name: Build
         run: dotnet build --no-restore --configuration Release
 
