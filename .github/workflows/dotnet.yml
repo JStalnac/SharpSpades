@@ -29,6 +29,9 @@ jobs:
         with:
           name: native-libraries
           path: native/bin
+
+      - name: Update plugins.toml
+        run: ./PluginManager.fsx update
       
       - name: Restore dependencies
         run: dotnet restore
