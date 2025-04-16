@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Types.fs" />
+    <Compile Include="Enums.fs" />
+    <Compile Include="Net/Packet.fs" />
+    <Compile Include="Net/Packets.fs" />
+    <Compile Include="IO.fs" />
+    <Compile Include="Plugins.fs" />
+    <Compile Include="Config.fs" />
+    <Compile Include="World.fs" />
+    <Compile Include="Supervisor.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.3" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.3" />
+  </ItemGroup>
+
+</Project>

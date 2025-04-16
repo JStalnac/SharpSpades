@@ -9,13 +9,13 @@ jobs:
       - uses: actions/checkout@v4
       
       - name: Build
-        run: cd SharpSpades.Native && ./build.sh
+        run: cd native/native && ./build.sh
 
       - name: Upload libraries
         uses: actions/upload-artifact@v4
         with:
           name: native-libraries
-          path: SharpSpades.Native/build/**/*
+          path: native/bin/**/*
 
   build:
     name: .NET Build
@@ -28,19 +28,10 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: native-libraries
-          path: SharpSpades.Native/build
+          path: native/bin
       
       - name: Restore dependencies
         run: dotnet restore
 
       - name: Build
         run: dotnet build --no-restore --configuration Release
-
-      - name: Test
-        run: dotnet test --no-build --configuration Release --verbosity normal /p:CollectCoverage=true /p:CoverletOutput=TestResults/ /p:CoverletOutputFormat=lcov /p:SkipAutoProps=true
-
-      - name: Publish coverage report to Coveralls
-        uses: coverallsapp/github-action@master
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          path-to-lcov: ./SharpSpades.Tests/TestResults/coverage.info

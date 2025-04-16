@@ -1,0 +1,166 @@
+﻿// Copyright (c) JStalnac 2025
+//
+// SPDX-License-Identifier: GPL-3.0-or-later OR EUPL-1.2
+
+namespace SharpSpades.Server
+
+open System
+open System.Threading
+open Microsoft.Extensions.DependencyInjection
+open Microsoft.Extensions.Logging
+open Serilog
+open Serilog.Configuration
+open ENet.Managed
+open SharpSpades
+open SharpSpades.Configuration
+
+module Program =
+
+    let configureServices (services : IServiceCollection) =
+        services
+            .AddScoped<ScopeGuard>(fun _ -> { Type = None })
+            .AddScoped<IWorld>(fun s ->
+                let guard = s.GetRequiredService<ScopeGuard>()
+                match guard.Type with
+                | Some (ScopeType.World w) -> w
+                | Some _ -> invalidOp "Cannot access IWorld in supervisor"
+                | None -> invalidOp "World not yet initialised"
+            ).AddScoped<ISupervisor>(fun s ->
+                let guard = s.GetRequiredService<ScopeGuard>()
+                match guard.Type with
+                | Some (ScopeType.Supervisor ins) -> ins
+                | Some _ -> invalidOp "Cannot access ISupervisor in world"
+                | None -> invalidOp "Supervisor not yet initialised"
+            ).AddLogging(fun c ->
+                c.AddSerilog() |> ignore)
+
+    [<EntryPoint>]
+    let main args =
+        let config =
+            if IO.fileExists "config.toml" then
+                IO.readFile "config.toml"
+                |> Async.RunSynchronously
+                |> function
+                    | Ok contents ->
+                        Config.load contents
+                        |> function
+                            | Ok config -> config
+                            | Error err ->
+                                eprintfn "Failed to load config: %s" err
+                                exit 1
+                    | Error ioError ->
+                        eprintfn "Failed to load config: %A" ioError
+                        exit 1
+            else
+                Map []
+
+        let writeToConsole outputTemplate (wt : LoggerSinkConfiguration) =
+            wt.Console(outputTemplate = outputTemplate) |> ignore
+
+        Log.Logger <- LoggerConfiguration()
+            .WriteTo.Conditional(
+                (fun ev -> ev.Properties.ContainsKey("SpadesWorld")),
+                (writeToConsole "[{Timestamp:HH:mm:ss} {Level:u3}] [world/{SpadesWorld}:{SourceContext}] {Message:lj}{NewLine}{Exception}"))
+            .WriteTo.Conditional(
+                (fun ev -> ev.Properties.ContainsKey("SpadesSupervisor")),
+                (writeToConsole "[{Timestamp:HH:mm:ss} {Level:u3}] [sup:{SourceContext}] {Message:lj}{NewLine}{Exception}"))
+            .WriteTo.Conditional(
+                (fun ev ->
+                    not (ev.Properties.ContainsKey("SpadesWorld") || ev.Properties.ContainsKey("SpadesSupervisor"))),
+                (writeToConsole "[{Timestamp:HH:mm:ss} {Level:u3}] [{SourceContext}] {Message:lj}{NewLine}{Exception}"))
+            .CreateLogger()
+
+        let logger =
+            LoggerFactory.Create(fun c -> c.AddSerilog() |> ignore)
+                .CreateLogger("Main")
+
+        let port =
+            config
+            |> Map.tryFind "port"
+            |> Option.map (fun x ->
+                match x with
+                | Integer i -> (int)i
+                | _ ->
+                    logger.LogCritical("Config: 'port' must be integer")
+                    exit 1)
+
+        logger.LogInformation("Starting SharpSpades")
+
+        logger.LogInformation("Loading plugins")
+        let plugins =
+            Plugins.readPluginsToml ()
+            |> Async.RunSynchronously
+            |> function
+                | Error err ->
+                    eprintfn "Failed to read plugins.toml: %s" err
+                    exit 1
+                | Ok available ->
+                    match Plugins.loadPlugins available with
+                    | Ok plugins -> plugins
+                    | Error errors ->
+                        logger.LogCritical("Failed to load plugins due to errors in plugins")
+                        for (plugin, errors) in errors do
+                            errors
+                            |> List.map (fun e -> sprintf "\n - %s" e)
+                            |> String.concat ""
+                            |> fun msg -> sprintf "Errors of plugin {Plugin}:%s" msg
+                            |> fun msg ->
+                                logger.LogCritical(msg, plugin)
+                        Log.CloseAndFlush()
+                        exit 1
+                        []
+        logger.LogDebug("Loaded plugins: {Plugins}",
+            plugins |> List.map (fun p -> p.Metadata.Id) |> List.toArray)
+
+        logger.LogDebug("Initialising services")
+        let services =
+            ServiceCollection()
+            |> configureServices
+            |> Plugins.configureServices plugins
+            |> fun services ->
+                let opts = ServiceProviderOptions()
+                opts.ValidateOnBuild <- true
+                services.BuildServiceProvider(opts)
+
+        logger.LogDebug("Loading ENet libraries")
+        try
+            ManagedENet.Startup()
+        with
+            ex ->
+                logger.LogCritical(ex, "Failed to load ENet (networking library)")
+                exit 1
+
+        use cts = new CancellationTokenSource()
+        Console.CancelKeyPress.AddHandler(fun _ args -> 
+            if not cts.IsCancellationRequested then
+                logger.LogInformation("Stopping, press Ctrl + C again for force stop")
+                args.Cancel <- true
+                cts.Cancel()
+            else
+                logger.LogWarning("Forcefully stopping server, some data may not be saved")
+                args.Cancel <- false)
+
+
+        try
+            use scope = services.CreateScope()
+            let supervisor = Supervisor(scope, {
+                Port = port
+                CancellationToken = cts.Token
+            })
+            supervisor.Run() |> Async.RunSynchronously
+        with
+            ex ->
+                logger.LogCritical(ex, "The supervisor crashed")
+                cts.Cancel()
+
+        logger.LogDebug("Unloading ENet")
+        try
+            ManagedENet.Shutdown()
+        with
+            ex ->
+                logger.LogCritical(ex, "Failed to unload ENet")
+                exit 1
+
+        Log.CloseAndFlush()
+
+        0

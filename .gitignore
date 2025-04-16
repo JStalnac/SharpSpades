@@ -15,4 +15,6 @@ obj/
 logs/
 config.json
 
+core
+
 coverage.*
