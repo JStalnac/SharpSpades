@@ -1,4 +1,4 @@
-﻿// Copyright (c) JStalnac 2025
+// Copyright (c) JStalnac 2025
 //
 // SPDX-License-Identifier: GPL-3.0-or-later OR EUPL-1.2
 
@@ -10,6 +10,7 @@ open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Logging
 open Serilog
 open Serilog.Configuration
+open Argu
 open ENet.Managed
 open SharpSpades
 open SharpSpades.Configuration
@@ -34,11 +35,11 @@ module Program =
             ).AddLogging(fun c ->
                 c.AddSerilog() |> ignore)
 
-    [<EntryPoint>]
-    let main args =
+    let loadAndRunServer configFile main =
         let config =
-            if IO.fileExists "config.toml" then
-                IO.readFile "config.toml"
+            match configFile with
+            | Some file ->
+                IO.readFile file
                 |> Async.RunSynchronously
                 |> function
                     | Ok contents ->
@@ -51,7 +52,7 @@ module Program =
                     | Error ioError ->
                         eprintfn "Failed to load config: %A" ioError
                         exit 1
-            else
+            | None ->
                 Map []
 
         let writeToConsole outputTemplate (wt : LoggerSinkConfiguration) =
@@ -73,16 +74,6 @@ module Program =
         let logger =
             LoggerFactory.Create(fun c -> c.AddSerilog() |> ignore)
                 .CreateLogger("Main")
-
-        let port =
-            config
-            |> Map.tryFind "port"
-            |> Option.map (fun x ->
-                match x with
-                | Integer i -> (int)i
-                | _ ->
-                    logger.LogCritical("Config: 'port' must be integer")
-                    exit 1)
 
         logger.LogInformation("Starting SharpSpades")
 
@@ -131,7 +122,7 @@ module Program =
                 exit 1
 
         use cts = new CancellationTokenSource()
-        Console.CancelKeyPress.AddHandler(fun _ args -> 
+        Console.CancelKeyPress.AddHandler(fun _ args ->
             if not cts.IsCancellationRequested then
                 logger.LogInformation("Stopping, press Ctrl + C again for force stop")
                 args.Cancel <- true
@@ -142,12 +133,8 @@ module Program =
 
 
         try
-            use scope = services.CreateScope()
-            let supervisor = Supervisor(scope, {
-                Port = port
-                CancellationToken = cts.Token
-            })
-            supervisor.Run() |> Async.RunSynchronously
+            main services config cts.Token
+            |> Async.RunSynchronously
         with
             ex ->
                 logger.LogCritical(ex, "The supervisor crashed")
@@ -164,3 +151,68 @@ module Program =
         Log.CloseAndFlush()
 
         0
+
+    [<RequireQualifiedAccess>]
+    type MainArguments =
+        | [<Unique; AltCommandLineAttribute("-c")>] Config of config : string
+        | [<SubCommand; CliPrefix(CliPrefix.None)>] Check
+
+        interface IArgParserTemplate with
+            member x.Usage =
+                match x with
+                | Config _ -> "Config file"
+                | Check ->
+                    "Check that the server is able to load by starting and stopping it"
+
+    [<EntryPoint>]
+    let main args =
+        let parser = ArgumentParser.Create<MainArguments>(programName = "SharpSpades.Server")
+        let results =
+            try
+                parser.ParseCommandLine(inputs = args, raiseOnUsage = true)
+            with
+                :? ArguParseException as e ->
+                    eprintfn "%s" e.Message
+                    exit 1
+
+        let configFile =
+            match results.TryGetResult(MainArguments.Config) with
+            | Some file ->
+                if not (IO.fileExists file) then
+                    eprintfn "Config file %s not found" file
+                    exit 1
+                Some file
+            | None ->
+                if IO.fileExists "config.toml" then
+                    Some "config.toml"
+                else
+                    None
+
+        if not (results.Contains(MainArguments.Check)) then
+            loadAndRunServer configFile (fun services config ct ->
+                async {
+                    let logger =
+                        services.GetRequiredService<ILoggerFactory>()
+                            .CreateLogger("Main")
+
+                    match Config.getInteger "port" config with
+                    | Ok port ->
+                        // TODO: Reload config when it changes
+                        use scope = services.CreateScope()
+                        let supervisor = Supervisor(scope, {
+                            Port = port |> Option.map int
+                            CancellationToken = ct
+                        })
+                        do! supervisor.Run()
+                    | Error err ->
+                        logger.LogCritical("Config error: {Error}", err)
+
+                })
+        else
+            loadAndRunServer configFile (fun services _ _ ->
+                async {
+                    let logger =
+                        services.GetRequiredService<ILoggerFactory>()
+                            .CreateLogger("Main")
+                    logger.LogInformation("Server started succesfully")
+                })

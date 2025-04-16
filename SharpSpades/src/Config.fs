@@ -43,6 +43,12 @@ module Config =
             | String str -> Ok str
             | other -> Error (sprintf "key '%s' must be a string" key))
 
+    let getInteger key config =
+        (key, config)
+        ||> mapKey (function
+            | Integer i -> Ok i
+            | other -> Error (sprintf "key '%s' must be an integer" key))
+
     let getList key config =
         (key, config)
         ||> mapKey (function
