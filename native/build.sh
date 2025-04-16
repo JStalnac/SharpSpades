@@ -6,7 +6,7 @@ fail() {
 }
 
 CC=cc
-CFLAGS="-std=c23 -Wall -Wextra -Wpedantic"
+CFLAGS="-std=c11 -Wall -Wextra -Wpedantic"
 LDFLAGS="-fPIC -lm"
 SOURCES="player.c grenade.c map.c hit_detection.c"
 output="bin"
