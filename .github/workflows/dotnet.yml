@@ -12,9 +12,10 @@ jobs:
         uses: xmake-io/github-action-setup-xmake@v1
         with:
           xmake-version: latest
+          actions-cache-folder: '.xmake-cache'
 
       - name: Build
-        run: cd native && xmake
+        run: cd native && xmake --yes
 
       - name: Upload libraries
         uses: actions/upload-artifact@v4
