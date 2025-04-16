@@ -38,3 +38,7 @@ jobs:
 
       - name: Build
         run: dotnet build --no-restore --configuration Release
+
+      - name: Check server
+        timeout-minutes: 1
+        run: cd SharpSpades.Server/src && dotnet run --no-build --configuration Release -- check
