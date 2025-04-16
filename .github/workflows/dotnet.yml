@@ -4,22 +4,28 @@ on: [push, pull_request]
 jobs:
   compile-native:
     name: Compile native libraries
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      
+
+      - name: Setup xmake
+        uses: xmake-io/github-action-setup-xmake@v1
+        with:
+          xmake-version: latest
+
       - name: Build
-        run: cd native && ./build.sh
+        run: cd native && xmake
 
       - name: Upload libraries
         uses: actions/upload-artifact@v4
         with:
           name: native-libraries
-          path: native/bin/**/*
+          path: |
+            native/build/linux/**/*
 
   build:
     name: .NET Build
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: compile-native
     steps:
       - uses: actions/checkout@v4
@@ -28,11 +34,11 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: native-libraries
-          path: native/bin
+          path: native/build/linux
 
       - name: Update plugins.toml
         run: ./PluginManager.fsx update
-      
+
       - name: Restore dependencies
         run: dotnet restore
 

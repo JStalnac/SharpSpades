@@ -7,37 +7,29 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
-  <PropertyGroup>
-    <BuildDir>$(MSBuildThisFileDirectory)../../native/bin</BuildDir>
-  </PropertyGroup>
-
-  <ItemGroup Condition=" '$(Configuration)'=='Release' ">
-    <Content Include="$(BuildDir)/linux-x64/libsharpspades.so"> 
-      <TargetPath>runtimes/linux-x64/native/libsharpspades.so</TargetPath>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      <PackagePath>runtimes/linux-x64/native/</PackagePath>
-      <Pack>true</Pack>
-    </Content>
-  </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="../../SharpSpades/src/SharpSpades.fsproj" />
   </ItemGroup>
 
-  <Choose>
-    <When Condition=" '$(Configuration)'=='Debug'">
-      <PropertyGroup>
-        <Arch>$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)</Arch>
-        <IsLinux Condition="$([MSBuild]::IsOsPlatform('Linux'))">true</IsLinux>
-      </PropertyGroup>
+  <PropertyGroup>
+    <BuildDir>$(MSBuildThisFileDirectory)../../native/build</BuildDir>
+  </PropertyGroup>
 
-      <ItemGroup Condition=" $(IsLinux) And '$(Arch)' == X64 ">
-        <Content Include="$(BuildDir)/linux-x64/libsharpspades.so">
-          <TargetPath>runtimes/linux-x64/native/libsharpspades.so</TargetPath>
-          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </Content>
-      </ItemGroup>
-      </When>
-  </Choose>
+  <Target Name="CopyLibraries" BeforeTargets="Build">
+    <PropertyGroup>
+      <LinuxX64Binary>$(BuildDir)/linux/x86_64/release/libsharpspades.so</LinuxX64Binary>
+    </PropertyGroup>
+    <ItemGroup>
+      <Content Condition="Exists('$(LinuxX64Binary)')" Include="$(LinuxX64Binary)">
+        <TargetPath>runtimes/linux-x64/native/libsharpspades.so</TargetPath>
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        <PackagePath>runtimes/linux-x64/native/</PackagePath>
+        <Pack>true</Pack>
+      </Content>
+    </ItemGroup>
+    <Warning
+      Condition="!Exists('$(LinuxX64Binary)')"
+      Text="Missing binary libsharpspades.so for runtime linux-x64" />
+  </Target>
 
 </Project>
