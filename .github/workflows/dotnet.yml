@@ -9,7 +9,7 @@ jobs:
       - uses: actions/checkout@v4
       
       - name: Build
-        run: cd native/native && ./build.sh
+        run: cd native && ./build.sh
 
       - name: Upload libraries
         uses: actions/upload-artifact@v4
