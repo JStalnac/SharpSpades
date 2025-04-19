@@ -15,18 +15,19 @@
     <BuildDir>$(MSBuildThisFileDirectory)../../native/build</BuildDir>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <LinuxX64Binary>$(BuildDir)/linux/x86_64/release/libsharpspades.so</LinuxX64Binary>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Condition="Exists('$(LinuxX64Binary)')" Include="$(LinuxX64Binary)">
+      <TargetPath>runtimes/linux-x64/native/libsharpspades.so</TargetPath>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <PackagePath>runtimes/linux-x64/native/</PackagePath>
+      <Pack>true</Pack>
+    </Content>
+  </ItemGroup>
+
   <Target Name="CopyLibraries" BeforeTargets="Build">
-    <PropertyGroup>
-      <LinuxX64Binary>$(BuildDir)/linux/x86_64/release/libsharpspades.so</LinuxX64Binary>
-    </PropertyGroup>
-    <ItemGroup>
-      <Content Condition="Exists('$(LinuxX64Binary)')" Include="$(LinuxX64Binary)">
-        <TargetPath>runtimes/linux-x64/native/libsharpspades.so</TargetPath>
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        <PackagePath>runtimes/linux-x64/native/</PackagePath>
-        <Pack>true</Pack>
-      </Content>
-    </ItemGroup>
     <Warning
       Condition="!Exists('$(LinuxX64Binary)')"
       Text="Missing binary libsharpspades.so for runtime linux-x64" />

@@ -21,7 +21,7 @@ namespace SharpSpades.Native;
 
 public static partial class LibSharpSpades
 {
-    private const string LibraryName = "sharpspades";
+    public const string LibraryName = "sharpspades";
 
     [LibraryImport(LibraryName, EntryPoint = nameof(map_create))]
     public static partial IntPtr map_create();

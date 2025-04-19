@@ -48,11 +48,10 @@ type PacketType =
     | VersionRequest = 33
     | VersionResponse = 34
 
+[<Flags>]
 type PacketFlags =
-    | Unrealible = 0
-    | Reliable = 1
-    | Unsequenced = 2
-    | UnsequencedReliable = 3
+    | Reliable = (1 <<< 0)
+    | Unsequenced = (1 <<< 1)
 
 type Packet(id : PacketType, size : int) =
     do

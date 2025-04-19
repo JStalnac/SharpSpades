@@ -6,6 +6,10 @@ namespace SharpSpades
 
 open System
 
+type ProtocolVersion =
+    | V075 = 3
+    | V076 = 4
+
 type DisconnectReason =
     | Undefined = 0
     | Banned = 1

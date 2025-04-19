@@ -11,7 +11,6 @@ open Microsoft.Extensions.Logging
 open Serilog
 open Serilog.Configuration
 open Argu
-open ENet.Managed
 open SharpSpades
 open SharpSpades.Configuration
 
@@ -61,14 +60,14 @@ module Program =
         Log.Logger <- LoggerConfiguration()
             .WriteTo.Conditional(
                 (fun ev -> ev.Properties.ContainsKey("SpadesWorld")),
-                (writeToConsole "[{Timestamp:HH:mm:ss} {Level:u3}] [world/{SpadesWorld}:{SourceContext}] {Message:lj}{NewLine}{Exception}"))
+                writeToConsole "[{Timestamp:HH:mm:ss} {Level:u3}] [world/{SpadesWorld}:{SourceContext}] {Message:lj}{NewLine}{Exception}")
             .WriteTo.Conditional(
                 (fun ev -> ev.Properties.ContainsKey("SpadesSupervisor")),
-                (writeToConsole "[{Timestamp:HH:mm:ss} {Level:u3}] [sup:{SourceContext}] {Message:lj}{NewLine}{Exception}"))
+                writeToConsole "[{Timestamp:HH:mm:ss} {Level:u3}] [sup:{SourceContext}] {Message:lj}{NewLine}{Exception}")
             .WriteTo.Conditional(
                 (fun ev ->
                     not (ev.Properties.ContainsKey("SpadesWorld") || ev.Properties.ContainsKey("SpadesSupervisor"))),
-                (writeToConsole "[{Timestamp:HH:mm:ss} {Level:u3}] [{SourceContext}] {Message:lj}{NewLine}{Exception}"))
+                writeToConsole "[{Timestamp:HH:mm:ss} {Level:u3}] [{SourceContext}] {Message:lj}{NewLine}{Exception}")
             .CreateLogger()
 
         let logger =
@@ -113,14 +112,6 @@ module Program =
                 opts.ValidateOnBuild <- true
                 services.BuildServiceProvider(opts)
 
-        logger.LogDebug("Loading ENet libraries")
-        try
-            ManagedENet.Startup()
-        with
-            ex ->
-                logger.LogCritical(ex, "Failed to load ENet (networking library)")
-                exit 1
-
         use cts = new CancellationTokenSource()
         Console.CancelKeyPress.AddHandler(fun _ args ->
             if not cts.IsCancellationRequested then
@@ -139,14 +130,6 @@ module Program =
             ex ->
                 logger.LogCritical(ex, "The supervisor crashed")
                 cts.Cancel()
-
-        logger.LogDebug("Unloading ENet")
-        try
-            ManagedENet.Shutdown()
-        with
-            ex ->
-                logger.LogCritical(ex, "Failed to unload ENet")
-                exit 1
 
         Log.CloseAndFlush()
 

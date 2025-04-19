@@ -1,8 +1,9 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
+    <NoWarn>FSAC004</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -16,7 +17,6 @@
 
   <ItemGroup>
     <PackageReference Include="Argu" Version="6.2.5" />
-    <PackageReference Include="ENet.Managed" Version="4.2.6" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.3" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.3" />
     <PackageReference Include="Samboy063.Tomlet" Version="6.0.0" />

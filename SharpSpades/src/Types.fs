@@ -4,6 +4,7 @@
 
 namespace SharpSpades
 
+type ClientId = uint
 type PlayerId = byte
 
 [<Struct>]

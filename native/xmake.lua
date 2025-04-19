@@ -1,6 +1,8 @@
 add_rules("mode.debug", "mode.release")
 
 set_project("sharpspades")
+set_languages("c11")
+set_warnings("allextra", "pedantic")
 
 add_requires("enet6")
 

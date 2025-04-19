@@ -5,13 +5,12 @@
 namespace SharpSpades.Server
 
 open System
-open System.Net
 open System.Threading
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Logging
 open Serilog
-open ENet.Managed
 open SharpSpades
+open SharpSpades.Native.Net
 
 type SupervisorOptions = {
         Port : int option
@@ -46,38 +45,26 @@ type Supervisor(scope : IServiceScope, opts : SupervisorOptions) as this =
             running <- true
 
             logger.LogInformation("Starting")
-            
-            let port = opts.Port |> Option.defaultValue 32887
-            use host =
-                let endpoint = IPEndPoint(IPAddress.Loopback, port)
-                new ENetHost(endpoint, 32, 1uy)
 
-            // Important for clients to be able to connect
-            host.CompressWithRangeCoder()
+            let port = opts.Port |> Option.defaultValue 32887 |> uint16
+            use host = NetHost.CreateListener(AddressType.Any, port, 32u, 1u)
+
+            host.OnConnect (fun (client : ClientId) version -> CallbackResult.Continue)
+            host.OnReceive (fun (client : ClientId) buffer -> CallbackResult.Continue)
+            host.OnDisconnect (fun (client : ClientId) ty -> CallbackResult.Continue)
 
             logger.LogInformation("Listening on port {Port}", port)
             try
                 while not opts.CancellationToken.IsCancellationRequested do
-                    let mutable ev : ENetEvent = host.Service(TimeSpan.FromMilliseconds(50))
-
-                    while not (ev.Type = ENetEventType.None) do
-                        match ev.Type with
-                        | ENetEventType.Connect -> ()
-                        | ENetEventType.Disconnect ->()
-                        | ENetEventType.Receive ->
-                            ev.Packet.RemoveRef()
-                            ()
-                        | ENetEventType.None -> failwith "unreachable"
-                        | _ -> ()
-
-                        ev <- host.CheckEvents()
+                    if host.PollEvents(TimeSpan.FromMicroseconds(50)) < 0 then
+                        logger.LogWarning("Failed to poll network events")
 
                 logger.LogInformation("Stopping")
             finally
                 logger.LogDebug("Stopped")
         }
 
-    interface ISupervisor with        
+    interface ISupervisor with
         member _.ServiceProvider = services
         member _.Logger = logger
         member _.LoggerFactory = loggerFactory
