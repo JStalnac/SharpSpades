@@ -18,7 +18,6 @@
 #include <limits.h>
 #include <stddef.h>
 #include <string.h>
-#include <stdio.h>
 
 #include <enet6/enet.h>
 

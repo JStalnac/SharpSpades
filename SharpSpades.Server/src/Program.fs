@@ -131,6 +131,8 @@ module Program =
                 logger.LogCritical(ex, "The supervisor crashed")
                 cts.Cancel()
 
+        logger.LogInformation("Server stopped")
+
         Log.CloseAndFlush()
 
         0
@@ -197,5 +199,5 @@ module Program =
                     let logger =
                         services.GetRequiredService<ILoggerFactory>()
                             .CreateLogger("Main")
-                    logger.LogInformation("Server started succesfully")
+                    logger.LogInformation("Server started succesfully. Stopping...")
                 })
