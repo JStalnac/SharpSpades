@@ -1,3 +1,7 @@
+// Copyright (c) 2025 JStalnac
+//
+// SPDX-License-Identifier: GPL-3.0-or-later OR EUPL-1.2
+
 namespace SharpSpades
 
 open System

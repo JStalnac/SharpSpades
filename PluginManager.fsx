@@ -2,7 +2,7 @@
 #r "nuget: Argu, 6.2.5"
 #r "nuget: Samboy063.Tomlet, 6.0.0"
 
-// Copyright (c) JStalnac 2025
+// Copyright (c) 2025 JStalnac
 //
 // SPDX-License-Identifier: GPL-3.0-or-later OR EUPL-1.2
 

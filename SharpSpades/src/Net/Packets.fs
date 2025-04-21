@@ -1,4 +1,4 @@
-// Copyright (c) JStalnac 2025
+// Copyright (c) 2025 JStalnac
 //
 // SPDX-License-Identifier: GPL-3.0-or-later OR EUPL-1.2
 
@@ -132,7 +132,7 @@ let readChatMessage packet (player : outref<_>) (messageType : outref<_>) (messa
             encoding.GetString(s)
 
 let makeChatMessage sender messageType message useUtf8 =
-    let b = 
+    let b =
         if useUtf8 then
             Encoding.UTF8.GetBytes(message : string)
         else

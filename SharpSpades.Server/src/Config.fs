@@ -1,4 +1,4 @@
-// Copyright (c) JStalnac 2025
+// Copyright (c) 2025 JStalnac
 //
 // SPDX-License-Identifier: GPL-3.0-or-later OR EUPL-1.2
 
@@ -35,7 +35,7 @@ module Config =
         ]
 
     let load toml =
-        try 
+        try
             TomlParser().Parse(toml)
             |> configOfTomlTable
             |> Ok

@@ -1,7 +1,7 @@
 #include "types.h"
 
 /*
- * Copyright (C) 2025  JStalnac
+ * Copyright (C) 2025 JStalnac
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

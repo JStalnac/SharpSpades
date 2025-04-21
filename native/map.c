@@ -2,8 +2,8 @@
  * Based on sample code from
  * http://silverspaceship.com/aosmap/aos_file_format.html
  *
- * Copyright (C) 2011  Silver Spaceship Software
- * Copyright (C) 2025  JStalnac
+ * Copyright (C) 2011 Silver Spaceship Software
+ * Copyright (C) 2025 JStalnac
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -165,7 +165,7 @@ map_write(const struct map *m, char *filename)
 					; // in this case, the bottom colors of this span are empty, because we'l emit as top colors
 				else {
 					// otherwise, these are real bottom colors so we can write them
-					while (map_is_surface(m, i, j, k)) 
+					while (map_is_surface(m, i, j, k))
 						++k;
 				}
 				bottom_colors_end = k;
@@ -188,7 +188,7 @@ map_write(const struct map *m, char *filename)
 					map_write_color(f, map_get(m, i, j, top_colors_start + z));
 				for (z = 0; z < bottom_colors_len; z++)
 					map_write_color(f, map_get(m, i, j, bottom_colors_start + z));
-			} 
+			}
 		}
 	}
 	fclose(f);
