@@ -1,5 +1,17 @@
-name: .NET
-on: [push, pull_request]
+name: Build
+on:
+  push:
+    paths-ignore:
+      - **/README.md
+      - **/LICENSE*.txt
+      - .editorconfig
+      - **/.gitignore
+  pull_request:
+    paths-ignore:
+      - **/README.md
+      - **/LICENSE*.txt
+      - .editorconfig
+      - **/.gitignore
 
 jobs:
   compile-native:
