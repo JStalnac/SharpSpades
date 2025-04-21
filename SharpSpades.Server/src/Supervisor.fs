@@ -39,6 +39,8 @@ type Supervisor(scope : IServiceScope, opts : SupervisorOptions) as this =
 
     let logger = loggerFactory.CreateLogger("Supervisor")
 
+    let eventManager = EventManager(logger)
+
     let mutable running = false
 
     member _.Run() =
@@ -110,3 +112,7 @@ type Supervisor(scope : IServiceScope, opts : SupervisorOptions) as this =
         member _.ServiceProvider = services
         member _.Logger = logger
         member _.LoggerFactory = loggerFactory
+
+        // This gets JIT'd for each event type
+        member _.FireEvent<'T when 'T :> Event>(ev : 'T) : unit =
+            eventManager.Fire(ev)

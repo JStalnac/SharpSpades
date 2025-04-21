@@ -16,11 +16,14 @@ type IWorld =
     abstract member Logger : ILogger
     abstract member LoggerFactory : ILoggerFactory
 
+    abstract member FireEvent<'T when 'T :> Event> : 'T -> unit
+
 module World =
     let getLogger (w : IWorld) category =
         w.LoggerFactory.CreateLogger(category)
 
-    open SharpSpades.Net
-
     let getLoggerT<'T> (w : IWorld) =
         w.LoggerFactory.CreateLogger<'T>()
+
+    let fire<'T when 'T :> Event> (w : IWorld) (ev : 'T) =
+        w.FireEvent ev

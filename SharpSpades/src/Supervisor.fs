@@ -7,16 +7,19 @@ namespace SharpSpades
 open System
 open Microsoft.Extensions.Logging
 
-type IServiceCollection = Microsoft.Extensions.DependencyInjection.IServiceCollection
-
 type ISupervisor =
     abstract member ServiceProvider : IServiceProvider
     abstract member Logger : ILogger
     abstract member LoggerFactory : ILoggerFactory
 
-module Supervisor =
-    let getLogger (ins : ISupervisor) category =
-        ins.LoggerFactory.CreateLogger(category)
+    abstract member FireEvent<'T when 'T :> Event> : 'T -> unit
 
-    let getLoggerT<'T> (ins : ISupervisor) =
-        ins.LoggerFactory.CreateLogger<'T>()
+module Supervisor =
+    let getLogger (s : ISupervisor) category =
+        s.LoggerFactory.CreateLogger(category)
+
+    let getLoggerT<'T> (s : ISupervisor) =
+        s.LoggerFactory.CreateLogger<'T>()
+
+    let fire<'T when 'T :> Event> (s : ISupervisor) (ev : 'T) =
+        s.FireEvent ev

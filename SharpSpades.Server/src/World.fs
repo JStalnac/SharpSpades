@@ -39,6 +39,8 @@ type World(scope : IServiceScope, opts : WorldOptions) as this =
 
     let logger = loggerFactory.CreateLogger("World")
 
+    let eventManager = EventManager(logger)
+
     let sendSupervisor msg =
         opts.Output.TryWrite(msg) |> ignore
 
@@ -75,3 +77,7 @@ type World(scope : IServiceScope, opts : WorldOptions) as this =
         member _.Logger = logger
         member _.LoggerFactory = loggerFactory
         member _.ServiceProvider = services
+
+        // This get JIT'd for each event type
+        member _.FireEvent<'T when 'T :> Event>(ev : 'T) : unit =
+            eventManager.Fire(ev)

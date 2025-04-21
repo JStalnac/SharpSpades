@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <Compile Include="Config.fs" />
+    <Compile Include="Events.fs" />
     <Compile Include="Plugins.fs" />
     <Compile Include="ScopeGuard.fs" />
     <Compile Include="Messages.fs" />
