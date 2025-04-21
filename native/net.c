@@ -80,7 +80,7 @@ net_host_create_listener(int address_type, uint16_t port, size_t maxClients, siz
 
 	enet_address_build_loopback(&address, address_type);
 	address.port = port;
-	host->host = enet_host_create(ENET_ADDRESS_TYPE_IPV6, &address,
+	host->host = enet_host_create(address_type, &address,
 	                              maxClients,
 	                              channels,
 	                              incoming_bandwidth,
