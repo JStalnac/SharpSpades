@@ -129,7 +129,7 @@ let getPlugin id =
             let makePlugin id assemblyName projectFile name
                     description version authors url
                 =
-                { 
+                {
                     Id = id;
                     AssemblyName = assemblyName;
                     ProjectFile = projectFile;
@@ -183,7 +183,7 @@ let getPlugin id =
                                     match str with
                                     | an when isValidId an ->
                                         Ok an
-                                    | an -> 
+                                    | an ->
                                         Error (sprintf "'%s' is an invalid assembly name" an)
                                 | None -> Ok id)
                                 |> propagate make errors
@@ -254,7 +254,7 @@ let getEnabledPlugins () =
                         async {
                             match! getPlugin id with
                             | Ok plugin -> return Available plugin
-                            | Error err -> return Unavailable (id, err)   
+                            | Error err -> return Unavailable (id, err)
                         })
                     |> Async.Parallel)
 
@@ -430,7 +430,7 @@ open SharpSpades
 module Plugin =
     let initWorld (w : IWorld) =
         async {
-            ()
+            Plugin.newBuilder ()
         }
 """
             |> writeFile (combine pluginDir "Plugin.fs")
@@ -479,7 +479,7 @@ project = "%s"
         if opts.EnablePlugin then
             printfn "Enabling plugin..."
             let! res =
-                enablePlugins [{ 
+                enablePlugins [{
                         Id = id;
                         AssemblyName = id;
                         ProjectFile = sprintf "%s.fsproj" id;
@@ -495,7 +495,7 @@ project = "%s"
         printfn "Done!"
 
         ()
-    }    
+    }
 
 type EnablePluginsOptions = {
         AddToSln : bool
@@ -512,7 +512,7 @@ let enablePluginsCmd plugins (opts : EnablePluginsOptions) =
                     | Error err -> return Error (id, err)
                 })
             |> Async.Parallel
-        
+
         let res =
             (Ok [], plugins)
             ||> Array.fold (fun state p ->
@@ -559,7 +559,7 @@ type DisablePluginsOptions = {
 let disablePluginsCmd plugins (opts : DisablePluginsOptions) =
     async {
         let! res = disablePlugins plugins
-        match res with 
+        match res with
         | Ok () -> ()
         | Error err ->
             eprintfn "Failed to disable plugins: %s" err
@@ -588,7 +588,7 @@ let disablePluginsCmd plugins (opts : DisablePluginsOptions) =
                         eprintfn "Failed to remove %s from solution file" plugin.Id
                 | Error err ->
                     eprintfn "Cannot remove %s due to error in plugin.toml: %s"
-                        id err 
+                        id err
     }
 
 let listPluginsCmd onlyEnabled =
@@ -730,7 +730,7 @@ match results with
 | List args ->
     listPluginsCmd (not (args.Contains(ListArgs.Available)))
     |> Async.RunSynchronously
-| Update -> 
+| Update ->
     async {
         printfn "Updating plugins.toml with new metadata from plugins..."
         let! res = getEnabledPlugins ()
