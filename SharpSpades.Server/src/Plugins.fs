@@ -27,13 +27,11 @@ module Plugins =
     }
 
     type SupervisorPlugin = {
-        Init : ISupervisor -> Async<unit>
-        Deinit : (ISupervisor -> Async<unit>) option
+        Init : ISupervisor -> Async<PluginBuilder>
     }
 
     type WorldPlugin = {
-        Init : IWorld -> Async<unit>
-        Deinit : (IWorld -> Async<unit>) option
+        Init : IWorld -> Async<PluginBuilder>
     }
 
     type PluginDescriptor = {
@@ -60,7 +58,7 @@ module Plugins =
                         (fun config ->
                         (Ok [], config)
                         ||> Map.fold (fun state id value ->
-                            state 
+                            state
                             |> Result.bind (fun plugins ->
                                 match value with
                                 | Section s ->
@@ -131,61 +129,44 @@ module Plugins =
             | _ -> Error "The type of configureServices must be either IServiceCollection -> IServiceCollection or IServiceCollection -> unit"
         | None -> Ok None
 
-    let private getInitFunction<'T> (ty : Type) name : Result<('T -> Async<unit>) option, string> =
+    let private getInitFunction<'T> (ty : Type) name : Result<('T -> Async<PluginBuilder>) option, string> =
         match getStaticMethod ty name with
         | Some mi ->
             match (mi.GetParameters(), mi.ReturnType) with
-            | [| p1 |], ret when p1.ParameterType = typeof<'T> && ret = typeof<Async<unit>>
-                -> Ok (Some (fun w -> mi.Invoke(null, [| w |]) :?> Async<unit>))
-            | [| p1 |], ret when p1.ParameterType = typeof<'T> && ret = typeof<unit>
+            | [| p1 |], ret when p1.ParameterType = typeof<'T> && ret = typeof<Async<PluginBuilder>>
+                -> Ok (Some (fun w -> mi.Invoke(null, [| w |]) :?> Async<PluginBuilder>))
+            | [| p1 |], ret when p1.ParameterType = typeof<'T> && ret = typeof<PluginBuilder>
                 -> Ok (Some (fun w ->
                     async {
-                        mi.Invoke(null, [| w |]) :?> unit
-                    }))
-            | [| p1 |], ret when p1.ParameterType = typeof<'T> && ret = typeof<'T>
-                -> Ok (Some (fun w ->
-                    async {
-                        mi.Invoke(null, [| w |]) :?> 'T |> ignore
+                        return mi.Invoke(null, [| w |]) :?> PluginBuilder
                     }))
             | _ ->
                 let tyName = typeof<'T>.Name
-                Error (sprintf "The type of %s must be one of %s -> Async<unit>, %s -> unit or %s -> %s"
-                        name tyName tyName tyName tyName)
+                let pluginBuilder = nameof PluginBuilder
+                Error $"The signature of {name} must be either {tyName} -> {pluginBuilder} or {tyName} -> Async<{pluginBuilder}>"
         | None -> Ok None
-
-    let private getInitFunctions<'T> ty context =
-        let init = getInitFunction<'T> ty (sprintf "init%s" context)
-        let deinit = getInitFunction<'T> ty (sprintf "deinit%s" context)
-        match (init, deinit) with
-        | Ok (Some init), Ok deinit -> Ok (Some (init, deinit))
-        | Ok None, Ok None -> Ok None
-        | Ok None, Ok (Some _) -> Error [ sprintf "Missing init%s function" context ]
-        | Ok None, Error err2 -> Error [ (sprintf "Missing init%s function" context); err2 ]
-        | Ok (Some _), Error err2 -> Error [ err2 ]
-        | Error err1, Ok _ -> Error [ err1 ]
-        | Error err1, Error err2 -> Error [ err1; err2 ]
 
     let private makeDescriptor (meta : PluginMetadata) (ty : Type) : Result<PluginDescriptor, string list> =
         let configureServices = getConfigureServices ty
         let supervisorPlugin =
-            getInitFunctions<ISupervisor> ty "Supervisor"
-            |> Result.map (Option.map (fun (init, deinit) -> { Init = init; Deinit = deinit } : SupervisorPlugin))
+            getInitFunction<ISupervisor> ty "Supervisor"
+            |> Result.map (Option.map (fun init -> { Init = init } : SupervisorPlugin))
         let worldPlugin =
-            getInitFunctions<IWorld> ty "World"
-            |> Result.map (Option.map (fun (init, deinit) -> { Init = init; Deinit = deinit }))
+            getInitFunction<IWorld> ty "World"
+            |> Result.map (Option.map (fun init -> { Init = init }))
 
         match (configureServices, worldPlugin, supervisorPlugin) with
-        | _, Ok None, Ok None -> Error [ "Missing initWorld or initSupervisor function" ]
+        | _, Ok None, Ok None -> Error [ "Missing initWorld and/or initSupervisor function" ]
         | Ok configureServices, Ok worldPlugin, Ok supervisorPlugin ->
             Ok { Type = ty; Metadata = meta; ConfigureServices = configureServices;
                  Supervisor = supervisorPlugin; World = worldPlugin; }
         | Error err1, Ok _, Ok _ -> Error [ err1 ]
-        | Ok _, Error err2, Ok _ -> Error err2
-        | Ok _, Ok _, Error err3 -> Error err3
-        | Error err1, Error err2, Ok _ -> Error (err1 :: err2)
-        | Error err1, Ok _, Error err3 -> Error (err1 :: err3)
-        | Ok _, Error err2, Error err3 -> Error (err2 @ err3)
-        | Error err1, Error err2, Error err3 -> Error (err1 :: err2 @ err3)
+        | Ok _, Error err2, Ok _ -> Error [ err2 ]
+        | Ok _, Ok _, Error err3 -> Error [ err3 ]
+        | Error err1, Error err2, Ok _ -> Error [ err1; err2 ]
+        | Error err1, Ok _, Error err3 -> Error [ err1; err3 ]
+        | Ok _, Error err2, Error err3 -> Error [ err2; err3 ]
+        | Error err1, Error err2, Error err3 -> Error [err1; err2; err3]
 
     let loadPlugins (availablePlugins : AvailablePlugin list) =
         availablePlugins

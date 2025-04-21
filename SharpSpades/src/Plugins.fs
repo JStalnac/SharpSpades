@@ -20,6 +20,7 @@ type PluginBuilder = {
     EventHandlers : (IRegisterEventHandler -> unit) list
     Disposables : IDisposable list
     AsyncDisposables : IAsyncDisposable list
+    Deinit : (unit -> unit) option
 }
 
 module Plugin =
@@ -29,6 +30,7 @@ module Plugin =
             EventHandlers = []
             Disposables = []
             AsyncDisposables = []
+            Deinit = None
         }
 
     let listenWithPriority priority handler builder =
@@ -51,3 +53,6 @@ module Plugin =
 
     let registerAsyncDisposable asyncDisposable builder =
         { builder with AsyncDisposables = asyncDisposable :: builder.AsyncDisposables }
+
+    let deinit f builder =
+        { builder with Deinit = Some f}
