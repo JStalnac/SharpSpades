@@ -39,8 +39,8 @@ module Plugin =
                 c.Register priority handler
         { builder with EventHandlers = configure :: builder.EventHandlers }
 
-    let listen priority handler =
-        listenWithPriority Priority.Normal priority handler
+    let listen handler builder =
+        listenWithPriority Priority.Normal handler builder
 
     let registerEvent<'T when 'T :> Event> builder =
         let configure =
