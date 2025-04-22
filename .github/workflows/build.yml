@@ -2,16 +2,16 @@ name: Build
 on:
   push:
     paths-ignore:
-      - **/README.md
-      - **/LICENSE*.txt
-      - .editorconfig
-      - **/.gitignore
+      - '**/README.md'
+      - '**/LICENSE*.txt'
+      - '.editorconfig'
+      - '**/.gitignore'
   pull_request:
     paths-ignore:
-      - **/README.md
-      - **/LICENSE*.txt
-      - .editorconfig
-      - **/.gitignore
+      - '**/README.md'
+      - '**/LICENSE*.txt'
+      - '.editorconfig'
+      - '**/.gitignore'
 
 jobs:
   compile-native:
