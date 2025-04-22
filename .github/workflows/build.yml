@@ -20,11 +20,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup xmake
-        uses: xmake-io/github-action-setup-xmake@v1
-        with:
-          xmake-version: latest
-          actions-cache-folder: '.xmake-cache'
+      - name: Install xmake
+        run: sudo apt install -y xmake
 
       - name: Build
         run: cd native && xmake --yes
