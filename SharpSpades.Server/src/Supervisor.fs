@@ -40,6 +40,7 @@ type Supervisor(scope : IServiceScope, opts : SupervisorOptions) as this =
     let logger = loggerFactory.CreateLogger("Supervisor")
 
     let eventManager = EventManager(logger)
+    let messages = Channel.CreateUnbounded<SupervisorMessage>()
 
     let mutable running = false
 
@@ -51,24 +52,30 @@ type Supervisor(scope : IServiceScope, opts : SupervisorOptions) as this =
 
             logger.LogInformation("Starting")
 
-            let input = Channel.CreateUnbounded<SupervisorMessage>()
-
             logger.LogInformation("Initialising plugins")
-            let! _ =
-                opts.Plugins
-                |> List.choose (fun descriptor ->
-                    match descriptor.Supervisor with
-                    | Some plugin ->
-                        // TODO: Catch exceptions
-                        plugin.Init this |> Some
-                    | None -> None)
-                |> Async.Parallel
+            let mutable pluginContainers = []
+            let! res = Plugins.initSupervisor this eventManager opts.Plugins
+            match res with
+            | Ok p ->
+                pluginContainers <- p
+            | Error errors ->
+                logger.LogError("Some plugins failed to load")
+                for desc, errors in errors do
+                    for (reason, ex) in errors do
+                        match ex with
+                        | Some ex ->
+                            logger.LogError(ex, "Failed to load plugin {Plugin}: {Reason}",
+                                desc.Metadata.Id, reason)
+                        | None ->
+                            logger.LogError("Failed to load plugin {Plugin}: {Reason}",
+                                desc.Metadata.Id, reason)
+                return ()
             logger.LogDebug("Plugins initialised")
 
             let world = World(services.CreateScope(), {
                     Id = "main"
                     Messages = Channel.CreateUnbounded()
-                    Output = input.Writer
+                    Output = messages.Writer
                     CancellationToken = opts.CancellationToken
                     Plugins = opts.Plugins
                 })
@@ -91,8 +98,8 @@ type Supervisor(scope : IServiceScope, opts : SupervisorOptions) as this =
                         logger.LogWarning("Failed to poll network events")
 
                     let mutable messagesRead = 0
-                    while messagesRead < 50 && input.Reader.Count > 0 do
-                        let hasMsg, msg = input.Reader.TryRead()
+                    while messagesRead < 50 && messages.Reader.Count > 0 do
+                        let hasMsg, msg = messages.Reader.TryRead()
                         if hasMsg then
                             match msg with
                             | WorldStarting(worldId) ->

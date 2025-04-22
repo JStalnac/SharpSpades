@@ -13,23 +13,40 @@ type PluginMainAttribute() =
 type IServiceCollection = Microsoft.Extensions.DependencyInjection.IServiceCollection
 
 type IRegisterEvent =
-    abstract member Register<'T when 'T :> Event> : unit -> unit
+    abstract member Register<'T when 'T :> Event>
+        : unit -> Result<unit, string>
 
 type IRegisterEventHandler =
     abstract member Register
-        : Priority -> EventHandler<'T> -> unit
+        : Priority -> EventHandler<'T> -> Result<unit, string>
 
-type PluginBuilder = {
-    Events : (IRegisterEvent -> unit) list
-    EventHandlers : (IRegisterEventHandler -> unit) list
+type PluginBuilder<'T> = {
+    Context : 'T
+    Events : (IRegisterEvent -> Result<unit, string>) list
+    EventHandlers : (IRegisterEventHandler -> Result<unit, string>) list
     Disposables : IDisposable list
     AsyncDisposables : IAsyncDisposable list
-    Deinit : (unit -> unit) option
+    Deinit : (unit -> Async<unit>) option
 }
 
+type WorldPluginBuilder() = class end
+
+type SupervisorPluginBuilder() = class end
+
 module Plugin =
-    let newBuilder () =
+    let newWorld () =
         {
+            Context = WorldPluginBuilder()
+            Events = []
+            EventHandlers = []
+            Disposables = []
+            AsyncDisposables = []
+            Deinit = None
+        }
+
+    let newSupervisor () =
+        {
+            Context = SupervisorPluginBuilder()
             Events = []
             EventHandlers = []
             Disposables = []
@@ -56,7 +73,8 @@ module Plugin =
         { builder with Disposables = disposable :: builder.Disposables }
 
     let registerAsyncDisposable asyncDisposable builder =
-        { builder with AsyncDisposables = asyncDisposable :: builder.AsyncDisposables }
+        { builder with
+            AsyncDisposables = asyncDisposable :: builder.AsyncDisposables }
 
     let deinit f builder =
         { builder with Deinit = Some f}

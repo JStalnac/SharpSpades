@@ -37,7 +37,7 @@ type EventManager(logger : ILogger) =
             reg.Handlers.Add(handler)
             Ok ()
         | false, _ ->
-            Error ""
+            Error (sprintf "No event of type %s registered" eventType.Name)
 
     member _.Fire(ev : 'T) =
         let eventType = typeof<'T>

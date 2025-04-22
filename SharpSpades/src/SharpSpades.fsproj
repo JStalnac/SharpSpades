@@ -8,6 +8,7 @@
   <ItemGroup>
     <Compile Include="Types.fs" />
     <Compile Include="Enums.fs" />
+    <Compile Include="Util.fs" />
     <Compile Include="Events.fs" />
     <Compile Include="Net/Packet.fs" />
     <Compile Include="Net/Packets.fs" />

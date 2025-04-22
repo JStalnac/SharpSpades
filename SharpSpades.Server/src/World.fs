@@ -59,6 +59,26 @@ type World(scope : IServiceScope, opts : WorldOptions) as this =
             logger.LogInformation("Starting world {Id}", opts.Id)
             sendSupervisor (WorldStarting opts.Id)
 
+            logger.LogInformation("Initialising plugins")
+            let mutable pluginContainers = []
+            let! res = Plugins.initWorld this eventManager opts.Plugins
+            match res with
+            | Ok p ->
+                pluginContainers <- p
+            | Error errors ->
+                logger.LogError("Some plugins failed to load")
+                for desc, errors in errors do
+                    for (reason, ex) in errors do
+                        match ex with
+                        | Some ex ->
+                            logger.LogError(ex, "Failed to load plugin {Plugin}: {Reason}",
+                                desc.Metadata.Id, reason)
+                        | None ->
+                            logger.LogError("Failed to load plugin {Plugin}: {Reason}",
+                                desc.Metadata.Id, reason)
+                return ()
+            logger.LogDebug("Plugins initialised")
+
             while not opts.CancellationToken.IsCancellationRequested do
                 let hasMsg, msg = input.TryRead()
                 if hasMsg then
