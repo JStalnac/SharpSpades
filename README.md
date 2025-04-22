@@ -1,4 +1,4 @@
-﻿# SharpSpades
+# SharpSpades
 A work-in-progress [Ace of Spades Classic](https://buildandshoot.com/) v0.75
 server implementation inspired by
 [Piqueserver](https://github.com/piqueserver/piqueserver) and
@@ -23,6 +23,13 @@ If you want to work on something:
 If you use an IDE that supports EditorConfig files, use the EditorConfig in the
 repo root. If your editor doesn't support EditorConfigs, look at other files in
 the project for reference for code style etc.
+
+If you are making a fork of the project, please list the changes that you make
+in the file `CHANGES.txt`, including any relevant dates. It makes it easier for
+users of your fork to understand what it does and how it differs from the
+original version. Stating changes when distributing a modified version of the
+project is also a requirement of both the GNU GPLv3 (section 5) and EUPL v1.2
+(section 5).
 
 ### Project structure
 SharpSpades is divided into several projects. Each project has a `<project>/src`

@@ -1,0 +1,9 @@
+CHANGES
+=======
+This file describes the changes that have been made to SharpSpades. This file is
+provided to help users understand modifications. Please include your name and
+the date when the changes were made.
+
+---
+
+
