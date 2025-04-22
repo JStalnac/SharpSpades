@@ -2,56 +2,57 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later OR EUPL-1.2
 
-namespace SharpSpades.Server
+namespace SharpSpades.Server.Plugins
 
 open System
 open System.IO
 open System.Reflection
 open SharpSpades
 open SharpSpades.Configuration
+open SharpSpades.Server
+
+type PluginMetadata = {
+    Id : string
+    Name : string option
+    Description : string option
+    Version : string option
+    Authors : string list option
+    Url : string option
+}
+
+type AvailablePlugin = {
+    Id : string
+    AssemblyName : string
+    Metadata : PluginMetadata
+}
+
+type PluginDescriptor = {
+    Type : Type
+    Metadata : PluginMetadata
+    ConfigureServices : (IServiceCollection -> unit) option
+    SupervisorInit
+        : (ISupervisor -> Async<PluginBuilder<SupervisorPluginBuilder>>) option
+    WorldInit : (IWorld -> Async<PluginBuilder<WorldPluginBuilder>>) option
+}
+
+type PluginContainer = {
+    Deinit : (unit -> Async<unit>) option
+    Descriptor : PluginDescriptor
+}
+
+type SupervisorPluginContainer = {
+    Disposables : IDisposable list
+    AsyncDisposables : IAsyncDisposable list
+    Deinit : (unit -> Async<unit>) option
+}
+
+type WorldPluginContainer = {
+    Disposables : IDisposable list
+    AsyncDisposables : IAsyncDisposable list
+    Deinit : (unit -> Async<unit>) option
+}
 
 module Plugins =
-    type PluginMetadata = {
-        Id : string
-        Name : string option
-        Description : string option
-        Version : string option
-        Authors : string list option
-        Url : string option
-    }
-
-    type AvailablePlugin = {
-        Id : string
-        AssemblyName : string
-        Metadata : PluginMetadata
-    }
-
-    type PluginDescriptor = {
-        Type : Type
-        Metadata : PluginMetadata
-        ConfigureServices : (IServiceCollection -> unit) option
-        SupervisorInit
-            : (ISupervisor -> Async<PluginBuilder<SupervisorPluginBuilder>>) option
-        WorldInit : (IWorld -> Async<PluginBuilder<WorldPluginBuilder>>) option
-    }
-
-    type PluginContainer = {
-        Deinit : (unit -> Async<unit>) option
-        Descriptor : PluginDescriptor
-    }
-
-    type SupervisorPluginContainer = {
-        Disposables : IDisposable list
-        AsyncDisposables : IAsyncDisposable list
-        Deinit : (unit -> Async<unit>) option
-    }
-
-    type WorldPluginContainer = {
-        Disposables : IDisposable list
-        AsyncDisposables : IAsyncDisposable list
-        Deinit : (unit -> Async<unit>) option
-    }
-
     let readPluginsToml () =
         async {
             let file =
