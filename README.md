@@ -12,6 +12,16 @@ server implementation inspired by
  - Protocol extension support
  - ...
 
+## Requirements
+SharpSpades requires the following packages for compiling:
+
+- .NET SDK 8.0
+- A C11 compiler
+- [xmake](https://xmake.io/)
+- [enet6](https://github.com/SirLynix/enet6) (installed automatically)
+
+At runtime only a .NET 8.0 runtime is needed.
+
 ## Contributing
 Feel free to send a PR or create an issue if you find any problems!
 
@@ -43,8 +53,8 @@ directory and separate tests in `<project>/tests`.
 
 `SharpSpades.Testing` - Test framework
 
-The native code lives under `native/`. To build it, run the `build.sh` POSIX
-shell script located in the directory.
+The native code lives under `native/`. It is built using xmake. To compile, run
+`xmake` in the native code directory.
 
 ## License
 The native code is licensed only under GNU General Public License version 3.0
