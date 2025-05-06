@@ -13,6 +13,7 @@ open Serilog.Configuration
 open Argu
 open SharpSpades
 open SharpSpades.Configuration
+open SharpSpades.Server.Plugins
 
 module Program =
 
