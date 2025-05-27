@@ -11,6 +11,7 @@ open Microsoft.Extensions.Logging
 open Serilog
 open SharpSpades
 open SharpSpades.Server.Plugins
+open SharpSpades.World
 
 type WorldOptions = {
         Id : WorldId
@@ -99,5 +100,5 @@ type World(scope : IServiceScope, opts : WorldOptions) as this =
         member _.ServiceProvider = services
 
         // This get JIT'd for each event type
-        member _.FireEvent<'T when 'T :> Event>(ev : 'T) : unit =
+        member _.FireEvent<'T when 'T :> IEvent>(ev : 'T) : unit =
             eventManager.Fire(ev)

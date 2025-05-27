@@ -9,7 +9,9 @@ open System.IO
 open System.Reflection
 open SharpSpades
 open SharpSpades.Configuration
+open SharpSpades.Supervisor
 open SharpSpades.Server
+open SharpSpades.World
 
 type PluginMetadata = {
     Id : string
@@ -271,7 +273,7 @@ module Plugins =
             f reg :: results, reg)
             ([],
             { new IRegisterEvent with
-                member _.Register<'T when 'T :> Event>() =
+                member _.Register<'T when 'T :> IEvent>() =
                      eventManager.RegisterEvent<'T>() })
         |> fun (results, _) -> results
 

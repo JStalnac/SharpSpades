@@ -15,8 +15,10 @@
     <Compile Include="IO.fs" />
     <Compile Include="Plugins.fs" />
     <Compile Include="Config.fs" />
-    <Compile Include="World.fs" />
-    <Compile Include="Supervisor.fs" />
+    <Compile Include="World/World.fs" />
+    <Compile Include="Supervisor/Events.fs" />
+    <Compile Include="Supervisor/Client.fs" />
+    <Compile Include="Supervisor/Supervisor.fs" />
   </ItemGroup>
 
   <ItemGroup>

@@ -4,7 +4,8 @@
 
 namespace SharpSpades.Server
 
-open SharpSpades
+open SharpSpades.Supervisor
+open SharpSpades.World
 
 [<RequireQualifiedAccess>]
 type ScopeType = Supervisor of ISupervisor | World of IWorld

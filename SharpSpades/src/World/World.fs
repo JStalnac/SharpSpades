@@ -2,10 +2,11 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later OR EUPL-1.2
 
-namespace SharpSpades
+namespace SharpSpades.World
 
 open System
 open Microsoft.Extensions.Logging
+open SharpSpades
 
 type WorldId = string
 
@@ -16,7 +17,7 @@ type IWorld =
     abstract member Logger : ILogger
     abstract member LoggerFactory : ILoggerFactory
 
-    abstract member FireEvent<'T when 'T :> Event> : 'T -> unit
+    abstract member FireEvent<'T when 'T :> IEvent> : 'T -> unit
 
 module World =
     let getLogger (w : IWorld) category =
@@ -25,5 +26,5 @@ module World =
     let getLoggerT<'T> (w : IWorld) =
         w.LoggerFactory.CreateLogger<'T>()
 
-    let fire<'T when 'T :> Event> (w : IWorld) (ev : 'T) =
+    let fire<'T when 'T :> IEvent> (w : IWorld) (ev : 'T) =
         w.FireEvent ev

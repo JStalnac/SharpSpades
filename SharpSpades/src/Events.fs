@@ -4,7 +4,7 @@
 
 namespace SharpSpades
 
-type Event = class end
+type IEvent = interface end
 
 type Priority =
     | Lowest = -2
@@ -13,4 +13,4 @@ type Priority =
     | High = 1
     | Highest = 2
 
-type EventHandler<'T when 'T :> Event> = 'T -> unit
+type EventHandler<'T when 'T :> IEvent> = 'T -> unit

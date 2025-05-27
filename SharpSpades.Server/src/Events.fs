@@ -11,7 +11,7 @@ open SharpSpades
 
 type private IEventRegistration = interface end
 
-type private EventRegistration<'T when 'T :> Event>() =
+type private EventRegistration<'T when 'T :> IEvent>() =
     member _.Handlers = ResizeArray<EventHandler<'T>>()
 
     interface IEventRegistration
@@ -19,9 +19,9 @@ type private EventRegistration<'T when 'T :> Event>() =
 type EventManager(logger : ILogger) =
     let events = Dictionary<Type, IEventRegistration>()
 
-    member _.RegisterEvent<'T when 'T :> Event>() =
+    member _.RegisterEvent<'T when 'T :> IEvent>() =
         let eventType = typeof<'T>
-        if eventType.IsSubclassOf(typeof<Event>) then
+        if eventType.IsSubclassOf(typeof<IEvent>) then
             let added = events.TryAdd(eventType, EventRegistration<'T>())
             if not added then
                 logger.LogWarning("Event of type {Event} was registered multiple times, ignoring later registrations", eventType.Name)
@@ -29,7 +29,7 @@ type EventManager(logger : ILogger) =
         else
             Error "Event type must inherit from Event"
 
-    member _.RegisterHandler<'T when 'T :> Event>(handler) =
+    member _.RegisterHandler<'T when 'T :> IEvent>(handler) =
         let eventType = typeof<'T>
         match events.TryGetValue(eventType) with
         | true, reg ->

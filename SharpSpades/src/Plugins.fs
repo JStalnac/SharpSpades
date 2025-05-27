@@ -13,7 +13,7 @@ type PluginMainAttribute() =
 type IServiceCollection = Microsoft.Extensions.DependencyInjection.IServiceCollection
 
 type IRegisterEvent =
-    abstract member Register<'T when 'T :> Event>
+    abstract member Register<'T when 'T :> IEvent>
         : unit -> Result<unit, string>
 
 type IRegisterEventHandler =
@@ -63,7 +63,7 @@ module Plugin =
     let listen handler builder =
         listenWithPriority Priority.Normal handler builder
 
-    let registerEvent<'T when 'T :> Event> builder =
+    let registerEvent<'T when 'T :> IEvent> builder =
         let configure =
             fun (c : IRegisterEvent) ->
                 c.Register<'T> ()

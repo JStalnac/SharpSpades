@@ -13,7 +13,10 @@ open Serilog.Configuration
 open Argu
 open SharpSpades
 open SharpSpades.Configuration
+open SharpSpades.Server.Supervisor
 open SharpSpades.Server.Plugins
+open SharpSpades.Supervisor
+open SharpSpades.World
 
 module Program =
 

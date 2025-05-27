@@ -18,6 +18,10 @@ type DisconnectReason =
     | ServerFull = 4
     | Kicked = 10
 
+type DisconnectType =
+    | Normal = 0
+    | Timeout = 1
+
 type Tool =
     | Spade = 0
     | Block = 1

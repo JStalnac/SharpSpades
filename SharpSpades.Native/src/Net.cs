@@ -32,12 +32,6 @@ public enum CallbackResult
     Stop = 1
 }
 
-public enum DisconnectType
-{
-    Normal = 0,
-    Timeout = 1
-}
-
 [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 public delegate CallbackResult ConnectCallback(uint client, ProtocolVersion version);
 

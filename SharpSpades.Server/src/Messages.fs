@@ -4,7 +4,7 @@
 
 namespace SharpSpades.Server
 
-open SharpSpades
+open SharpSpades.World
 
 /// Messages sent to supervisor by worlds
 type SupervisorMessage =

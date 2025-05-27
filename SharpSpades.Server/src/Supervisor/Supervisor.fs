@@ -2,23 +2,32 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later OR EUPL-1.2
 
-namespace SharpSpades.Server
+namespace SharpSpades.Server.Supervisor
 
 open System
+open System.Collections.Generic
 open System.Threading
 open System.Threading.Channels
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Logging
 open Serilog
 open SharpSpades
+open SharpSpades.Supervisor
+open SharpSpades.Net
 open SharpSpades.Native.Net
 open SharpSpades.Server.Plugins
+open SharpSpades.Server
 
 type SupervisorOptions = {
-        Port : int option
-        CancellationToken : CancellationToken
-        Plugins : PluginDescriptor list
-    }
+    Port : int option
+    CancellationToken : CancellationToken
+    Plugins : PluginDescriptor list
+}
+
+type ClientInfo = {
+    Version : ProtocolVersion
+    Stats : ClientStats
+}
 
 type Supervisor(scope : IServiceScope, opts : SupervisorOptions) as this =
     let services = scope.ServiceProvider
@@ -40,7 +49,37 @@ type Supervisor(scope : IServiceScope, opts : SupervisorOptions) as this =
     let logger = loggerFactory.CreateLogger("Supervisor")
 
     let eventManager = EventManager(logger)
+    do
+        eventManager.RegisterEvent<OnClientConnect>() |> ignore
+        ()
+
     let messages = Channel.CreateUnbounded<SupervisorMessage>()
+    let clients = Dictionary<ClientId, ClientInfo>()
+
+    let handleConnect clientId version =
+        let ev = { Version = version }
+        Supervisor.fireEvent this ev
+        clients.Add(clientId, {
+            Version = version
+            Stats = {
+                Address = System.Net.IPEndPoint(System.Net.IPAddress.Any, 32887)
+                IncomingBandwidth = 0u
+                OutgoingBandwidth = 0u
+                PacketLoss = 0u
+                RoundTripTime = 0u
+            }
+        })
+        logger.LogInformation("Client {ClientId} connected", clientId)
+        ()
+
+    let handleDisconnect clientId disconnectType =
+        let ev = { Reason = disconnectType } : OnClientDisconnect
+        Supervisor.fireEvent this ev
+        let removed = clients.Remove(clientId)
+        if not removed then
+            logger.LogWarning("Client {ClientId} disconnected but was not tracked in state", clientId)
+        logger.LogInformation("Client {ClientId} disconnected", clientId)
+        ()
 
     let mutable running = false
 
@@ -85,10 +124,12 @@ type Supervisor(scope : IServiceScope, opts : SupervisorOptions) as this =
             use host = NetHost.CreateListener(AddressType.IPv4, port, 32u, 1u)
 
             host.OnConnect (fun (client : ClientId) version ->
+                handleConnect client version
                 CallbackResult.Continue)
             host.OnReceive (fun (client : ClientId) buffer ->
                 CallbackResult.Continue)
             host.OnDisconnect (fun (client : ClientId) ty ->
+                handleDisconnect client ty
                 CallbackResult.Continue)
 
             logger.LogInformation("Listening on port {Port}", port)
@@ -120,6 +161,14 @@ type Supervisor(scope : IServiceScope, opts : SupervisorOptions) as this =
         member _.Logger = logger
         member _.LoggerFactory = loggerFactory
 
+        member _.Clients = [||]
+
         // This gets JIT'd for each event type
-        member _.FireEvent<'T when 'T :> Event>(ev : 'T) : unit =
+        member _.FireEvent<'T when 'T :> IEvent>(ev : 'T) : unit =
             eventManager.Fire(ev)
+
+        member _.SendPacket(client : ClientId, packet : Packet) =
+            raise (NotImplementedException())
+
+        member _.GetClientStats (arg: ClientId): ClientStats option =
+            raise (NotImplementedException())
