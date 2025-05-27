@@ -27,7 +27,7 @@
     </Content>
   </ItemGroup>
 
-  <Target Name="CopyLibraries" BeforeTargets="Build">
+  <Target Name="WarnMissingLibraries" BeforeTargets="Build">
     <Warning
       Condition="!Exists('$(LinuxX64Binary)')"
       Text="Missing binary libsharpspades.so for runtime linux-x64" />
