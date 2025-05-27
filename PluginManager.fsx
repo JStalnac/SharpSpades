@@ -50,7 +50,7 @@ let combine p1 p2 = Path.Combine(p1, p2)
 let combine3 p1 p2 p3 = Path.Combine(p1, p2, p3)
 
 let rootDir = __SOURCE_DIRECTORY__
-let serverDir = combine rootDir "SharpSpades.Server/src"
+let serverDir = combine rootDir "SharpSpades/src"
 let pluginsDir = combine rootDir "plugins"
 
 let runCommand cmdName (args : string) =
@@ -425,6 +425,7 @@ let newPluginCmd (id : string) (opts : NewPluginOptions) =
             id |> sprintf """namespace %s
 
 open SharpSpades
+open SharpSpades.Plugins
 
 [<PluginMain>]
 module Plugin =
@@ -441,7 +442,8 @@ module Plugin =
             exit 1
 
         let! res =
-            (opts.Name, sprintf "%s.fsproj" id) ||> sprintf """name = "%s"
+            (opts.Name, sprintf "%s.fsproj" id)
+            ||> sprintf """name = "%s"
 project = "%s"
 """
             |> writeFile (combine pluginDir "plugin.toml")

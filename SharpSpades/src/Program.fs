@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later OR EUPL-1.2
 
-namespace SharpSpades.Server
+namespace SharpSpades
 
 open System
 open System.Threading
@@ -13,8 +13,7 @@ open Serilog.Configuration
 open Argu
 open SharpSpades
 open SharpSpades.Configuration
-open SharpSpades.Server.Supervisor
-open SharpSpades.Server.Plugins
+open SharpSpades.Plugins
 open SharpSpades.Supervisor
 open SharpSpades.World
 

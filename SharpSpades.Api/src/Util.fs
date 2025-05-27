@@ -1,4 +1,4 @@
-module SharpSpades.Server.Util
+module SharpSpades.Util
 
 /// <summary>
 /// Convert a list of results into a result of <see cref="Ok" />s or

@@ -1,15 +1,15 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SharpSpades", "SharpSpades", "{BAE4799B-F738-450C-91FC-6F8178CD5F8E}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SharpSpades.Api", "SharpSpades.Api", "{BAE4799B-F738-450C-91FC-6F8178CD5F8E}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "SharpSpades", "SharpSpades\src\SharpSpades.fsproj", "{35A3956A-AD6D-423D-BAA1-DC52AE1FDBA0}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "SharpSpades.Api", "SharpSpades.Api\src\SharpSpades.Api.fsproj", "{35A3956A-AD6D-423D-BAA1-DC52AE1FDBA0}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SharpSpades.Server", "SharpSpades.Server", "{9ADB3A64-FA75-40E3-8DCB-752DE47FFC37}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SharpSpades", "SharpSpades", "{9ADB3A64-FA75-40E3-8DCB-752DE47FFC37}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "SharpSpades.Server", "SharpSpades.Server\src\SharpSpades.Server.fsproj", "{C709B0DB-12BD-48F4-84B7-FC223614DE8C}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "SharpSpades", "SharpSpades\src\SharpSpades.fsproj", "{C709B0DB-12BD-48F4-84B7-FC223614DE8C}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SharpSpades.Testing", "SharpSpades.Testing", "{707F3C78-6BE9-4BD2-8741-46F7D57C9944}"
 EndProject

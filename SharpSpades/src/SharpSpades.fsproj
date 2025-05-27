@@ -1,29 +1,43 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="Types.fs" />
-    <Compile Include="Enums.fs" />
-    <Compile Include="Util.fs" />
-    <Compile Include="Events.fs" />
-    <Compile Include="Net/Packet.fs" />
-    <Compile Include="Net/Packets.fs" />
-    <Compile Include="IO.fs" />
-    <Compile Include="Plugins.fs" />
     <Compile Include="Config.fs" />
+    <Compile Include="Events.fs" />
+    <Compile Include="Plugins.fs" />
+    <Compile Include="ScopeGuard.fs" />
+    <Compile Include="Messages.fs" />
     <Compile Include="World/World.fs" />
-    <Compile Include="Supervisor/Events.fs" />
-    <Compile Include="Supervisor/Client.fs" />
     <Compile Include="Supervisor/Supervisor.fs" />
+    <Compile Include="Program.fs" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.3" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.3" />
+    <PackageReference Include="Argu" Version="6.2.5" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.3" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.3" />
+    <PackageReference Include="Samboy063.Tomlet" Version="6.0.0" />
+    <PackageReference Include="Serilog" Version="4.2.0" />
+    <PackageReference Include="Serilog.Extensions.Logging" Version="9.0.1" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
+    <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\SharpSpades.Api\src\SharpSpades.Api.fsproj" />
+    <ProjectReference Include="..\..\SharpSpades.Native\src\SharpSpades.Native.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="plugins.toml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <Import Project="Plugins.targets" />
+  <Import Project="../../SharpSpades.Native/src/AddRuntimeTargetsToDepsJson.targets" />
 </Project>

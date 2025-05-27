@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../../SharpSpades/src/SharpSpades.fsproj" />
+    <ProjectReference Include="../../SharpSpades.Api/src/SharpSpades.Api.fsproj" />
   </ItemGroup>
 
   <PropertyGroup>
