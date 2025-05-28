@@ -45,9 +45,10 @@ project is also a requirement of both the GNU GPLv3 (section 5) and EUPL v1.2
 SharpSpades is divided into several projects. Each project has a `<project>/src`
 directory and separate tests in `<project>/tests`.
 
-`SharpSpades` - The API of the server
 
-`SharpSpades.Server` - Server implementation
+`SharpSpades` - Server implementation
+
+`SharpSpades.Api` - The API of the server
 
 `SharpSpades.Native` - Native library wrapper code (C#)
 
