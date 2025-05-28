@@ -57,4 +57,4 @@ jobs:
 
       - name: Check server
         timeout-minutes: 1
-        run: cd SharpSpades.Server/src && dotnet run --no-build --configuration Release -- check
+        run: cd SharpSpades/src && dotnet run --no-build --configuration Release -- check
