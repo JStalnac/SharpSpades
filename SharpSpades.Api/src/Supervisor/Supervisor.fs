@@ -17,7 +17,7 @@ type ISupervisor =
     abstract member Clients : IClient array
 
     abstract member FireEvent<'T when 'T :> IEvent> : 'T -> unit
-    abstract member SendPacket : ClientId * Packet -> unit
+    abstract member SendPacket : ClientId * PacketFlags * Packet -> unit
     abstract member GetClientStats : ClientId -> ClientStats option
 
 module Supervisor =
@@ -33,8 +33,8 @@ module Supervisor =
     let getClients (s : ISupervisor) =
         s.Clients
 
-    let sendPacket (s : ISupervisor) client packet =
-        s.SendPacket(client, packet)
+    let sendPacket (s : ISupervisor) client flags packet =
+        s.SendPacket(client, flags, packet)
 
     let getClientStats (s : ISupervisor) client =
         s.GetClientStats(client)

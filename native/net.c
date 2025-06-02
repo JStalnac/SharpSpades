@@ -52,8 +52,9 @@ struct host
 };
 
 struct host *
-net_host_create_listener(int address_type, uint16_t port, size_t maxClients, size_t channels,
-                uint32_t incoming_bandwidth, uint32_t outgoing_bandwidth)
+net_host_create_listener(int address_type, uint16_t port, size_t maxClients,
+                         size_t channels, uint32_t incoming_bandwidth,
+                         uint32_t outgoing_bandwidth)
 {
 	ENetAddress address;
 	struct host *host;
@@ -218,7 +219,8 @@ net_host_handle_disconnect(struct host *host, ENetEvent *ev, uint32_t type)
 	return -1;
 }
 
-int net_host_poll_events(struct host *host, uint32_t service_timeout_ms)
+int
+net_host_poll_events(struct host *host, uint32_t service_timeout_ms)
 {
 	ENetEvent ev;
 	int ret;
@@ -257,4 +259,49 @@ int net_host_poll_events(struct host *host, uint32_t service_timeout_ms)
 	} while ((ret = enet_host_check_events(host->host, &ev)) > 0);
 
 	return ret;
+}
+
+int
+net_host_send_packet(struct host *host, uint32_t client,
+                     int flags, uint8_t *buffer, int buffer_len)
+{
+	ENetPacket *packet;
+	ENetPeer *peer;
+	uint32_t enet_flags;
+	size_t i;
+
+	if (!host)
+		return -1;
+	if (client == 0)
+		return -1;
+
+	peer = NULL;
+	for (i = 0; i < host->clients_len; i++) {
+		if (host->clients[i].id == client) {
+			peer = host->clients[i].peer;
+			break;
+		}
+	}
+
+	if (!peer)
+		return -1;
+
+	switch (flags) {
+	case PACKET_FLAG_RELIABLE:
+		enet_flags = ENET_PACKET_FLAG_RELIABLE;
+		break;
+	case PACKET_FLAG_UNSEQUENCED:
+		enet_flags = ENET_PACKET_FLAG_UNSEQUENCED;
+		break;
+	default:
+		return -1;
+	}
+
+	packet = enet_packet_create(buffer, buffer_len, enet_flags);
+	if (enet_peer_send(peer, 0, packet) != 0) {
+		enet_packet_destroy(packet);
+		return -1;
+	}
+
+	return 0;
 }

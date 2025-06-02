@@ -16,6 +16,7 @@
  */
 
 using System.Runtime.InteropServices;
+using SharpSpades.Net;
 
 namespace SharpSpades.Native.Net;
 
@@ -103,6 +104,14 @@ public partial class NetHost : IDisposable
         return net_host_poll_events(host, (uint)timeout.Milliseconds);
     }
 
+    public unsafe int SendPacket(uint client, PacketFlags flags, ReadOnlySpan<byte> buffer)
+    {
+        fixed (byte *b = buffer)
+        {
+            return net_host_send_packet(host, client, (int)flags, b, buffer.Length);
+        }
+    }
+
     public void Dispose()
     {
         if (disposed)
@@ -134,4 +143,7 @@ public partial class NetHost : IDisposable
 
     [LibraryImport(LibSharpSpades.LibraryName)]
     internal static partial int net_host_poll_events(IntPtr host, uint serviceTimeoutMs);
+
+    [LibraryImport(LibSharpSpades.LibraryName)]
+    internal static unsafe partial int net_host_send_packet(IntPtr host, uint client, int flags, byte *buffer, int buffer_len);
 }

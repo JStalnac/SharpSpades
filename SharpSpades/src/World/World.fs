@@ -4,6 +4,7 @@
 
 namespace SharpSpades
 
+open System.Collections.Generic
 open System.Threading
 open System.Threading.Channels
 open Microsoft.Extensions.DependencyInjection
@@ -14,12 +15,16 @@ open SharpSpades.Plugins
 open SharpSpades.World
 
 type WorldOptions = {
-        Id : WorldId
-        Messages : Channel<WorldMessage>
-        Output : ChannelWriter<SupervisorMessage>
-        CancellationToken : CancellationToken
-        Plugins : PluginDescriptor list
-    }
+    Id : WorldId
+    Messages : Channel<WorldMessage>
+    Output : ChannelWriter<SupervisorMessage>
+    CancellationToken : CancellationToken
+    Plugins : PluginDescriptor list
+}
+
+type WorldClient = {
+    Id : ClientId
+}
 
 type World(scope : IServiceScope, opts : WorldOptions) as this =
     let services = scope.ServiceProvider
@@ -41,6 +46,8 @@ type World(scope : IServiceScope, opts : WorldOptions) as this =
     let logger = loggerFactory.CreateLogger("World")
 
     let eventManager = EventManager(logger)
+
+    let clients = List<WorldClient>()
 
     let sendSupervisor msg =
         opts.Output.TryWrite(msg) |> ignore
@@ -87,6 +94,12 @@ type World(scope : IServiceScope, opts : WorldOptions) as this =
                     | Stop ->
                         sendSupervisor (WorldStopped opts.Id)
                         return ()
+                    | TransferClient clientId ->
+                        let client = { Id = clientId }
+                        clients.Add(client)
+                        ()
+                    | PacketReceived (clientId, packet) ->
+                        ()
                 do! Async.Sleep 50
 
             sendSupervisor (WorldStopped opts.Id)

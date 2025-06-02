@@ -13,6 +13,7 @@ open Microsoft.Extensions.Logging
 open Serilog
 open SharpSpades
 open SharpSpades.Supervisor
+open SharpSpades.World
 open SharpSpades.Net
 open SharpSpades.Native.Net
 open SharpSpades.Plugins
@@ -26,6 +27,7 @@ type SupervisorOptions = {
 type ClientInfo = {
     Version : ProtocolVersion
     Stats : ClientStats
+    World : WorldId option
 }
 
 type Supervisor(scope : IServiceScope, opts : SupervisorOptions) as this =
@@ -47,6 +49,9 @@ type Supervisor(scope : IServiceScope, opts : SupervisorOptions) as this =
 
     let logger = loggerFactory.CreateLogger("Supervisor")
 
+    let port = opts.Port |> Option.defaultValue 32887 |> uint16
+    let host = NetHost.CreateListener(AddressType.IPv4, port, 32u, 1u)
+
     let eventManager = EventManager(logger)
     do
         eventManager.RegisterEvent<OnClientConnect>() |> ignore
@@ -54,6 +59,20 @@ type Supervisor(scope : IServiceScope, opts : SupervisorOptions) as this =
 
     let messages = Channel.CreateUnbounded<SupervisorMessage>()
     let clients = Dictionary<ClientId, ClientInfo>()
+
+    let tryFindClient id =
+        match clients.TryGetValue(id) with
+        | true, client -> Some client
+        | false, _ -> None
+
+    let sendPacket client flags (packet : Packet) =
+        match tryFindClient client with
+        | Some _ ->
+            match host.SendPacket(client, flags, packet.Buffer) with
+            | 0 -> Ok ()
+            | _ -> Error "Failed to send packet"
+        | None ->
+            Error "Client not found"
 
     let handleConnect clientId version =
         let ev = { Version = version }
@@ -67,6 +86,7 @@ type Supervisor(scope : IServiceScope, opts : SupervisorOptions) as this =
                 PacketLoss = 0u
                 RoundTripTime = 0u
             }
+            World = None
         })
         logger.LogInformation("Client {ClientId} connected", clientId)
         ()
@@ -119,9 +139,6 @@ type Supervisor(scope : IServiceScope, opts : SupervisorOptions) as this =
                 })
             world.Run() |> Async.Start
 
-            let port = opts.Port |> Option.defaultValue 32887 |> uint16
-            use host = NetHost.CreateListener(AddressType.IPv4, port, 32u, 1u)
-
             host.OnConnect (fun (client : ClientId) version ->
                 handleConnect client version
                 CallbackResult.Continue)
@@ -142,12 +159,30 @@ type Supervisor(scope : IServiceScope, opts : SupervisorOptions) as this =
                         let hasMsg, msg = messages.Reader.TryRead()
                         if hasMsg then
                             match msg with
-                            | WorldStarting(worldId) ->
+                            | WorldStarting worldId ->
                                 logger.LogInformation("World {WorldId} starting", worldId)
                                 world.Messages.Writer.TryWrite(Stop) |> ignore
-                            | WorldStopping(_) -> failwith "Not Implemented"
-                            | WorldStopped(worldId) ->
+                            | WorldStopping _ -> failwith "Not Implemented"
+                            | WorldStopped worldId ->
                                 logger.LogInformation("World {WorldId} stopped", worldId)
+                            | SendPacket (worldId, clientId, flags, packet) ->
+                                match tryFindClient clientId with
+                                | Some client when client.World <> Some worldId ->
+                                    logger.LogWarning(
+                                        "World {Sender} tried to send packet with ID {PacketId} to client {ClientId} but the client is in world {ClientWorld}",
+                                        worldId, packet.Id, clientId, client.World)
+                                | None ->
+                                    logger.LogWarning(
+                                        "World {Sender} tried to send packet with ID {PacketId} to client {ClientId} but the client is not assigned to any world",
+                                        worldId, packet.Id, clientId)
+                                | Some _ ->
+                                    match sendPacket clientId flags packet with
+                                    | Ok _ -> ()
+                                    | Error reason ->
+                                        logger.LogWarning("Failed to send packet to client {ClientId}: {Reason}",
+                                            clientId, reason)
+                                packet.RemoveRef()
+                                ()
                         messagesRead <- messagesRead + 1
 
                 logger.LogInformation("Stopping")
@@ -166,8 +201,9 @@ type Supervisor(scope : IServiceScope, opts : SupervisorOptions) as this =
         member _.FireEvent<'T when 'T :> IEvent>(ev : 'T) : unit =
             eventManager.Fire(ev)
 
-        member _.SendPacket(client : ClientId, packet : Packet) =
-            raise (NotImplementedException())
+        member _.SendPacket(client : ClientId, flags : PacketFlags, packet : Packet) =
+            sendPacket client flags packet
+            ()
 
         member _.GetClientStats (arg: ClientId): ClientStats option =
             raise (NotImplementedException())

@@ -63,3 +63,4 @@ void net_host_set_receive_callback(struct host *, receive_callback);
 void net_host_set_disconnect_callback(struct host *, disconnect_callback);
 
 int net_host_poll_events(struct host *, uint32_t service_timeout_ms);
+int net_host_send_packet(struct host *, uint32_t client, int flags, uint8_t *buffer, int buffer_len);
