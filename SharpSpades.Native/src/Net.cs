@@ -47,6 +47,12 @@ public partial class NetHost : IDisposable
     private readonly IntPtr host;
     private bool disposed = false;
 
+    // The callbacks must be stored somewhere so they don't get
+    // garbage collected.
+    private ConnectCallback? connectCallback = null;
+    private ReceiveCallback? receiveCallback = null;
+    private DisconnectCallback? disconnectCallback = null;
+
     private NetHost(IntPtr host)
     {
         this.host = host;
@@ -68,7 +74,8 @@ public partial class NetHost : IDisposable
 
     public void OnConnect(Func<uint, ProtocolVersion, CallbackResult> callback)
     {
-        net_host_set_connect_callback(host, Callback);
+        connectCallback = Callback;
+        net_host_set_connect_callback(host, connectCallback);
 
         CallbackResult Callback(uint client, ProtocolVersion version)
         {
@@ -80,7 +87,8 @@ public partial class NetHost : IDisposable
 
     public unsafe void OnReceive(ReceiveFunc callback)
     {
-        net_host_set_receive_callback(host, Callback);
+        receiveCallback = Callback;
+        net_host_set_receive_callback(host, receiveCallback);
 
         CallbackResult Callback(uint client, byte* buffer, int length)
         {
@@ -91,7 +99,8 @@ public partial class NetHost : IDisposable
 
     public void OnDisconnect(Func<uint, DisconnectType, CallbackResult> callback)
     {
-        net_host_set_disconnect_callback(host, Callback);
+        disconnectCallback = Callback;
+        net_host_set_disconnect_callback(host, disconnectCallback);
 
         CallbackResult Callback(uint client, DisconnectType data)
         {
