@@ -195,6 +195,7 @@ net_host_handle_disconnect(struct host *host, ENetEvent *ev, uint32_t type)
 	struct client *c;
 	uint32_t client_id;
 	size_t i;
+	int ret;
 
 	if (!host || !ev)
 		return -1;
@@ -206,14 +207,16 @@ net_host_handle_disconnect(struct host *host, ENetEvent *ev, uint32_t type)
 		if (c->id != client_id)
 			continue;
 
+		if (!host->disconnect_callback)
+			ret = CALLBACK_RESULT_CONTINUE;
+		else
+			ret = host->disconnect_callback(client_id, type);
+
 		memset(c, 0, sizeof(*c));
 		c->id = 0;
 		c->peer = NULL;
 
-		if (!host->disconnect_callback)
-			return CALLBACK_RESULT_CONTINUE;
-
-		return host->disconnect_callback(client_id, type);
+		return ret;
 	}
 
 	return -1;
