@@ -51,7 +51,7 @@ module Program =
 
     [<EntryPoint>]
     let main args =
-        let parser = ArgumentParser.Create<MainArguments>(programName = "SharpSpades.Server")
+        let parser = ArgumentParser.Create<MainArguments>(programName = "SharpSpades")
         let results =
             try
                 parser.ParseCommandLine(inputs = args, raiseOnUsage = true)
