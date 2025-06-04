@@ -144,7 +144,7 @@ net_host_handle_connect(struct host *host, ENetEvent *ev)
 
 	for (i = 0; i < host->clients_len; i++) {
 		c = &host->clients[i];
-		if (c->id == 0)
+		if (c->id != 0)
 			continue;
 
 		// Free client slot
