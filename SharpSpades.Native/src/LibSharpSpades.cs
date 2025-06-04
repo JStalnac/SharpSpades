@@ -32,6 +32,15 @@ public static partial class LibSharpSpades
     [LibraryImport(LibraryName, EntryPoint = nameof(map_load))]
     public static partial void map_load(IntPtr map, ReadOnlySpan<byte> v, int len);
 
+    [LibraryImport(LibraryName)]
+    public static unsafe partial int map_writer_init(MapWriter* w);
+
+    [LibraryImport(LibraryName)]
+    public static unsafe partial void map_writer_deinit(MapWriter* w);
+
+    [LibraryImport(LibraryName)]
+    public static unsafe partial void map_write(IntPtr map, MapWriter* w);
+
     [LibraryImport(LibraryName, EntryPoint = nameof(map_set))]
     public static partial void map_set(IntPtr map, ushort x, ushort y, ushort z, Block b);
 

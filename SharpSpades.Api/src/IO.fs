@@ -41,3 +41,23 @@ module IO =
                     | ex ->
                         return rethrowKeepStacktrace ex
         }
+
+    let readFileBytes path =
+        async {
+            try
+                let! contents =
+                    File.ReadAllBytesAsync(path)
+                    |> Async.AwaitTask
+                return Ok contents
+            with
+                // | :? AggregateException as ae ->
+                //     match ae.InnerException with
+                    | :? FileNotFoundException ->
+                        return Error FileNotFound
+                    | :? DirectoryNotFoundException ->
+                        return Error DirectoryNotFound
+                    | :? IOException as e ->
+                        return Error (IOException e)
+                    | ex ->
+                        return rethrowKeepStacktrace ex
+        }

@@ -22,6 +22,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "map.h"
 
@@ -97,21 +98,70 @@ map_load(struct map *m, const uint8_t *v, int len)
 	assert(v - base == len);
 }
 
-static void
-map_write_color(FILE *f, uint32_t color)
+int
+map_writer_init(struct map_writer *w)
 {
-	// file format endianness is ARGB little endian, i.e. B,G,R,A
-	fputc((uint8_t) (color >>  0), f);
-	fputc((uint8_t) (color >>  8), f);
-	fputc((uint8_t) (color >> 16), f);
-	fputc((uint8_t) (color >> 24), f);
+	// 4 MB is the initial size for the buffer. Most maps are 2-3 MB encoded
+	// and 4 MB (2^22 bytes) is the smallest power of two above that number.
+	int cap = 4 * 1024 * 1024;
+
+	memset(w, 0, sizeof(*w));
+
+	if (!(w->buffer = malloc(sizeof(w->buffer) * cap))) {
+		return -1;
+	}
+	w->capacity = cap;
+	w->len = 0;
+	return 0;
 }
 
 void
-map_write(const struct map *m, char *filename)
+map_writer_deinit(struct map_writer *w)
+{
+	if (!w)
+		return;
+	free(w->buffer);
+	memset(w, 0, sizeof(*w));
+	w->buffer = NULL;
+	w->capacity = 0;
+	w->len = 0;
+}
+
+static void
+map_writer_write_byte(struct map_writer *w, uint8_t b)
+{
+	int new_len;
+
+	if (w->len >= w->capacity) {
+		new_len = w->capacity;
+		do {
+			// Double the length until the contents fit
+			new_len *= 2;
+
+			// 64 MB is the maximum size of the encoded map at
+			// 512x512x64 size
+			assert(new_len <= 64 * 1024 * 1024);
+		} while (new_len <= w->len);
+		assert((w->buffer = realloc(w->buffer, new_len)) != NULL);
+	}
+
+	w->buffer[w->len++] = b;
+}
+
+static void
+map_writer_write_color(struct map_writer *w, uint32_t color)
+{
+	// file format endianness is ARGB little endian, i.e. B,G,R,A
+	map_writer_write_byte(w, (uint8_t) (color >>  0));
+	map_writer_write_byte(w, (uint8_t) (color >>  8));
+	map_writer_write_byte(w, (uint8_t) (color >> 16));
+	map_writer_write_byte(w, (uint8_t) (color >> 24));
+}
+
+void
+map_write(const struct map *m, struct map_writer *w)
 {
 	int i, j, k;
-	FILE *f = fopen(filename, "wb");
 
 	for (j = 0; j < 512; j++) {
 		for (i = 0; i < 512; i++) {
@@ -162,7 +212,7 @@ map_write(const struct map *m, char *filename)
 					++z;
 
 				if (z == MAP_Z || 0)
-					; // in this case, the bottom colors of this span are empty, because we'l emit as top colors
+					; // in this case, the bottom colors of this span are empty, because we'll emit as top colors
 				else {
 					// otherwise, these are real bottom colors so we can write them
 					while (map_is_surface(m, i, j, k))
@@ -177,21 +227,20 @@ map_write(const struct map *m, char *filename)
 				colors = top_colors_len + bottom_colors_len;
 
 				if (k == MAP_Z)
-					fputc(0,f); // last span
+					map_writer_write_byte(w, 0); // last span
 				else
-					fputc(colors+1, f);
-				fputc(top_colors_start, f);
-				fputc(top_colors_end-1, f);
-				fputc(air_start, f);
+					map_writer_write_byte(w, colors+1);
+				map_writer_write_byte(w, top_colors_start);
+				map_writer_write_byte(w, top_colors_end-1);
+				map_writer_write_byte(w, air_start);
 
 				for (z = 0; z < top_colors_len; z++)
-					map_write_color(f, map_get(m, i, j, top_colors_start + z));
+					map_writer_write_color(w, map_get(m, i, j, top_colors_start + z));
 				for (z = 0; z < bottom_colors_len; z++)
-					map_write_color(f, map_get(m, i, j, bottom_colors_start + z));
+					map_writer_write_color(w, map_get(m, i, j, bottom_colors_start + z));
 			}
 		}
 	}
-	fclose(f);
 }
 
 void

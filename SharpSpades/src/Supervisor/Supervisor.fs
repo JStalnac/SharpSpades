@@ -25,9 +25,9 @@ type SupervisorOptions = {
 }
 
 type ClientInfo = {
-    Version : ProtocolVersion
-    Stats : ClientStats
-    World : WorldId option
+    ProtocolVersion : ProtocolVersion
+    mutable Stats : ClientStats
+    mutable World : WorldId option
 }
 
 type Supervisor(scope : IServiceScope, opts : SupervisorOptions) as this =
@@ -78,7 +78,7 @@ type Supervisor(scope : IServiceScope, opts : SupervisorOptions) as this =
         let ev = { Version = version }
         Supervisor.fireEvent this ev
         clients.Add(clientId, {
-            Version = version
+            ProtocolVersion = version
             Stats = {
                 Address = System.Net.IPEndPoint(System.Net.IPAddress.Any, 32887)
                 IncomingBandwidth = 0u
@@ -139,8 +139,12 @@ type Supervisor(scope : IServiceScope, opts : SupervisorOptions) as this =
                 })
             world.Run() |> Async.Start
 
-            host.OnConnect (fun (client : ClientId) version ->
-                handleConnect client version
+            host.OnConnect (fun (clientId : ClientId) version ->
+                handleConnect clientId version
+                let client = tryFindClient clientId |> Option.get
+                client.World <- Some "main"
+                logger.LogInformation("Transferring client {ClientId} to world {World}", clientId, "main")
+                world.Messages.Writer.TryWrite(TransferClient clientId) |> ignore
                 CallbackResult.Continue)
             host.OnReceive (fun (client : ClientId) buffer ->
                 CallbackResult.Continue)
@@ -161,7 +165,7 @@ type Supervisor(scope : IServiceScope, opts : SupervisorOptions) as this =
                             match msg with
                             | WorldStarting worldId ->
                                 logger.LogInformation("World {WorldId} starting", worldId)
-                                world.Messages.Writer.TryWrite(Stop) |> ignore
+                                // world.Messages.Writer.TryWrite(Stop) |> ignore
                             | WorldStopping _ -> failwith "Not Implemented"
                             | WorldStopped worldId ->
                                 logger.LogInformation("World {WorldId} stopped", worldId)

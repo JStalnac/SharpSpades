@@ -2,16 +2,21 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later OR EUPL-1.2
 
-namespace SharpSpades
+namespace SharpSpades.World
 
+open System
+open System.IO
+open System.IO.Compression
 open System.Collections.Generic
 open System.Threading
 open System.Threading.Channels
+open System.Diagnostics
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Logging
 open Serilog
 open SharpSpades
 open SharpSpades.Plugins
+open SharpSpades.Net
 open SharpSpades.World
 
 type WorldOptions = {
@@ -22,9 +27,11 @@ type WorldOptions = {
     Plugins : PluginDescriptor list
 }
 
-type WorldClient = {
-    Id : ClientId
-}
+type WorldClient(id) =
+    member _.Id : ClientId = id
+
+    interface IWorldClient with
+        member x.Id = x.Id
 
 type World(scope : IServiceScope, opts : WorldOptions) as this =
     let services = scope.ServiceProvider
@@ -47,10 +54,26 @@ type World(scope : IServiceScope, opts : WorldOptions) as this =
 
     let eventManager = EventManager(logger)
 
+    let mutable map = None
+    let mutable compressedMap = Unchecked.defaultof<_>
     let clients = List<WorldClient>()
+
+    let tryFindClient id =
+        let res = clients.Find (fun c -> c.Id = id)
+        match res with
+        | v when obj.ReferenceEquals(v, null) -> None
+        | client -> Some client
 
     let sendSupervisor msg =
         opts.Output.TryWrite(msg) |> ignore
+
+    let sendReliablePacket clientId packet =
+        SendPacket (opts.Id, clientId, PacketFlags.Reliable, packet)
+        |> sendSupervisor
+
+    let sendUnreliablePacket clientId packet =
+        SendPacket (opts.Id, clientId, PacketFlags.Unsequenced, packet)
+        |> sendSupervisor
 
     let mutable running = false
 
@@ -84,8 +107,52 @@ type World(scope : IServiceScope, opts : WorldOptions) as this =
                         | None ->
                             logger.LogError("Failed to load plugin {Plugin}: {Reason}",
                                 desc.Metadata.Id, reason)
+                // TODO: Need to inform supervisor
                 return ()
             logger.LogDebug("Plugins initialised")
+
+            logger.LogInformation("Loading map from map.vxl...")
+            let! res = Map.loadMap "map.vxl"
+            match res with
+            | Ok m ->
+                map <- Some m
+                logger.LogInformation("Map loaded")
+            | Error error ->
+                logger.LogError("Failed to load map from file map.vxl: {Reason}",
+                    sprintf "%A" error)
+                // TODO: Need to inform supervisor
+                return ()
+
+            logger.LogInformation("Encoding and compressing map...")
+            let sw = Stopwatch.StartNew()
+            let res =
+                Option.get map
+                |> Map.processEncodedMap (fun memory ->
+                    // TODO: This needs to happen on a separate thread because
+                    // it takes 800 ms to compress the map on SmallestSize (my computer).
+                    // Encoding the map also takes 100+ ms so we need a way to
+                    // do it concurrently as well. We need to copy the map buffer
+                    // to do so.
+                    logger.LogInformation("Encoding map took {Time} ms", sw.ElapsedMilliseconds)
+                    use output = new MemoryStream()
+                    let compressionLevel = CompressionLevel.SmallestSize
+                    use deflateStream = new DeflateStream(output, compressionLevel)
+                    deflateStream.Write(memory.Span)
+                    let res = output.ToArray()
+                    logger.LogInformation("Original size of map: {Original} Compressed size of map: {Compressed} Compression level: {CompressionLevel}",
+                        memory.Length, output.Length, compressionLevel)
+                    res)
+            sw.Stop()
+            match res with
+            | Ok c ->
+                compressedMap <- c
+                logger.LogInformation("Encoded and compressed map in {Milliseconds} ms",
+                    sw.ElapsedMilliseconds)
+            | Error err ->
+                logger.LogError("Failed to encode and compress map: {Reason}. Took {Milliseconds} ms",
+                    (sprintf "%A" err), sw.ElapsedMilliseconds)
+                // TODO: Need to inform supervisor
+                return ()
 
             while not opts.CancellationToken.IsCancellationRequested do
                 let hasMsg, msg = input.TryRead()
@@ -95,10 +162,28 @@ type World(scope : IServiceScope, opts : WorldOptions) as this =
                         sendSupervisor (WorldStopped opts.Id)
                         return ()
                     | TransferClient clientId ->
-                        let client = { Id = clientId }
+                        let client = WorldClient(clientId)
                         clients.Add(client)
+                        logger.LogInformation("Client {ClientId} connected", clientId)
+                        Packets.makeMapStart (uint compressedMap.Length)
+                            |> sendReliablePacket clientId
+                        let chunkSize = 8 * 1024
+                        let mutable rest = ReadOnlyMemory<byte>(compressedMap)
+                        while rest.Length > 0 do
+                            let size = min rest.Length chunkSize
+                            let chunk =
+                                Packets.makeMapChunk (rest.Span.Slice(0, size))
+                            sendReliablePacket clientId chunk
+                            rest <- rest.Slice(size)
+                        logger.LogInformation("Sent all map chunks to {ClientId}", clientId)
                         ()
                     | PacketReceived (clientId, packet) ->
+                        match tryFindClient clientId with
+                        | Some client ->
+                            PacketHandlers.handlePacket this client packet
+                        | None ->
+                            logger.LogWarning("Received a packet from client {ClientId} but the client is not connected to the world",
+                                clientId)
                         ()
                 do! Async.Sleep 50
 

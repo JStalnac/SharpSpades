@@ -42,10 +42,20 @@ struct map {
 	block blocks[MAP_X][MAP_Y][MAP_Z];
 };
 
+struct map_writer {
+	uint8_t *buffer;
+	int capacity;
+	int len;
+};
+
 struct map *map_create();
 void map_destroy(struct map *);
+
 void map_load(struct map *, const uint8_t *v, int len);
-void map_write(const struct map *, char *filename);
+
+int map_writer_init(struct map_writer *);
+void map_writer_deinit(struct map_writer *);
+void map_write(const struct map *, struct map_writer *);
 
 void map_set(struct map *, uint16_t x, uint16_t y, uint16_t z, block b);
 block map_get(const struct map *, uint16_t x, uint16_t y, uint16_t z);

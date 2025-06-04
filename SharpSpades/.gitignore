@@ -2,3 +2,4 @@ bin/
 obj/
 
 src/Plugins.targets
+src/map.vxl
