@@ -155,7 +155,7 @@ type Supervisor(scope : IServiceScope, opts : SupervisorOptions) as this =
             logger.LogInformation("Listening on port {Port}", port)
             try
                 while not opts.CancellationToken.IsCancellationRequested do
-                    if host.PollEvents(TimeSpan.FromMilliseconds(50)) < 0 then
+                    if host.PollEvents(TimeSpan.FromMilliseconds(50L)) < 0 then
                         logger.LogWarning("Failed to poll network events")
 
                     let mutable messagesRead = 0

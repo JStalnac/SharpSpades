@@ -15,12 +15,12 @@ server implementation inspired by
 ## Requirements
 SharpSpades requires the following packages for compiling:
 
-- .NET SDK 8.0
+- .NET SDK 10.0
 - A C11 compiler
 - [xmake](https://xmake.io/)
 - [enet6](https://github.com/SirLynix/enet6) (installed automatically)
 
-At runtime only a .NET 8.0 runtime is needed.
+At runtime only a .NET 10.0 runtime is needed.
 
 ## Contributing
 Feel free to send a PR or create an issue if you find any problems!
