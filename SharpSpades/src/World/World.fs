@@ -136,8 +136,8 @@ type World(scope : IServiceScope, opts : WorldOptions) as this =
                     logger.LogInformation("Encoding map took {Time} ms", sw.ElapsedMilliseconds)
                     use output = new MemoryStream()
                     let compressionLevel = CompressionLevel.SmallestSize
-                    use deflateStream = new DeflateStream(output, compressionLevel)
-                    deflateStream.Write(memory.Span)
+                    use zlibStream = new ZLibStream(output, compressionLevel)
+                    zlibStream.Write(memory.Span)
                     let res = output.ToArray()
                     logger.LogInformation("Original size of map: {Original} Compressed size of map: {Compressed} Compression level: {CompressionLevel}",
                         memory.Length, output.Length, compressionLevel)
@@ -146,6 +146,7 @@ type World(scope : IServiceScope, opts : WorldOptions) as this =
             match res with
             | Ok c ->
                 compressedMap <- c
+                do! File.WriteAllBytesAsync("compressed.gz", compressedMap) |> Async.AwaitTask
                 logger.LogInformation("Encoded and compressed map in {Milliseconds} ms",
                     sw.ElapsedMilliseconds)
             | Error err ->
@@ -167,6 +168,9 @@ type World(scope : IServiceScope, opts : WorldOptions) as this =
                         logger.LogInformation("Client {ClientId} connected", clientId)
                         Packets.makeMapStart (uint compressedMap.Length)
                             |> sendReliablePacket clientId
+                        // TODO: OpenSpades fails to decompress the map ("unexpected EOF")
+                        // TODO: BetterSpades succeeds but has an odd red color
+                        // in the limbo screen and won't send ExistingPlayer
                         let chunkSize = 8 * 1024
                         let mutable rest = ReadOnlyMemory<byte>(compressedMap)
                         while rest.Length > 0 do
@@ -176,6 +180,21 @@ type World(scope : IServiceScope, opts : WorldOptions) as this =
                             sendReliablePacket clientId chunk
                             rest <- rest.Slice(size)
                         logger.LogInformation("Sent all map chunks to {ClientId}", clientId)
+                        Packets.makeStateDataCtf
+                            1uy
+                            ({ B = 0uy; G = 0uy; R = 0uy })
+                            ({ B = 0uy; G = 0uy; R = 0uy })
+                            ({ B = 0uy; G = 0uy; R = 0uy })
+                            "Blue"
+                            "Green"
+                            { Team1Score = 0uy
+                              Team2Score = 0uy
+                              CaptureLimit = 10uy
+                              Team1Intel = Packets.IntelState.OnGround { X = 256f; Y = 256f; Z = 32f }
+                              Team2Intel = Packets.IntelState.OnGround { X = 256f; Y = 256f; Z = 32f }
+                              Team1BasePos = { X = 0f; Y = 0f; Z = 32f }
+                              Team2BasePos = { X = 512f; Y = 512f; Z = 32f }}
+                        |> sendReliablePacket clientId
                         ()
                     | PacketReceived (clientId, packet) ->
                         match tryFindClient clientId with
@@ -200,3 +219,6 @@ type World(scope : IServiceScope, opts : WorldOptions) as this =
         // This get JIT'd for each event type
         member _.FireEvent<'T when 'T :> IEvent>(ev : 'T) : unit =
             eventManager.Fire(ev)
+
+        member _.SendReliable (client : IWorldClient, packet : Packet): unit =
+            sendReliablePacket client.Id packet

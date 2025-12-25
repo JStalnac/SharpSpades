@@ -141,6 +141,7 @@ map_writer_write_byte(struct map_writer *w, uint8_t b)
 			// 64 MB is the maximum size of the encoded map at
 			// 512x512x64 size
 			assert(new_len <= 64 * 1024 * 1024);
+			// TODO: Looping is unnecessary
 		} while (new_len <= w->len);
 		assert((w->buffer = realloc(w->buffer, new_len)) != NULL);
 	}
