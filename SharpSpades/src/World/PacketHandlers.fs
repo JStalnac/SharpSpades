@@ -1,6 +1,5 @@
 namespace SharpSpades.World
 
-open System
 open SharpSpades.Net
 
 module PacketHandlers =
@@ -12,14 +11,10 @@ module PacketHandlers =
         Delegate : PacketHandlerDelegate
     }
 
-    let private handleExistingPlayer (w : IWorld) (client : IWorldClient) (packet) =
-        ()
-
     let private handlers : DelegateContainer array =
         let handler f = { Delegate = f }
         Array.init 256 (fun i ->
-            match enum i with
-            | PacketType.ExistingPlayer -> handler handleExistingPlayer
+            match enum<PacketType> i with
             | _ -> { Delegate = null })
 
     let handlePacket world client (packet : Packet) =

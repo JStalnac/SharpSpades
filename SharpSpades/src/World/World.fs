@@ -1,4 +1,4 @@
-// Copyright (c) 2025 JStalnac
+// Copyright (c) 2025-2026 JStalnac
 //
 // SPDX-License-Identifier: GPL-3.0-or-later OR EUPL-1.2
 
@@ -129,18 +129,22 @@ type World(scope : IServiceScope, opts : WorldOptions) as this =
                 Option.get map
                 |> Map.processEncodedMap (fun memory ->
                     // TODO: This needs to happen on a separate thread because
-                    // it takes 800 ms to compress the map on SmallestSize (my computer).
-                    // Encoding the map also takes 100+ ms so we need a way to
-                    // do it concurrently as well. We need to copy the map buffer
-                    // to do so.
+                    // it takes 300 ms to compress the map on SmallestSize (my
+                    // computer). Encoding the map also takes 150+ ms so we
+                    // need a way to do it concurrently as well. We need to
+                    // copy the map buffer to do so.
                     logger.LogInformation("Encoding map took {Time} ms", sw.ElapsedMilliseconds)
                     use output = new MemoryStream()
                     let compressionLevel = CompressionLevel.SmallestSize
-                    use deflateStream = new DeflateStream(output, compressionLevel)
-                    deflateStream.Write(memory.Span)
+                    using (new ZLibStream(output, compressionLevel, true))
+                        (fun stream -> stream.Write memory.Span)
                     let res = output.ToArray()
-                    logger.LogInformation("Original size of map: {Original} Compressed size of map: {Compressed} Compression level: {CompressionLevel}",
-                        memory.Length, output.Length, compressionLevel)
+                    logger.LogInformation(
+                        "Original size of map: {Original} Compressed size of map: {Compressed} Ratio: {CompressionRatio:F2} Compression level: {CompressionLevel}",
+                        memory.Length,
+                        output.Length,
+                        float output.Length / float memory.Length,
+                        compressionLevel)
                     res)
             sw.Stop()
             match res with
@@ -176,6 +180,21 @@ type World(scope : IServiceScope, opts : WorldOptions) as this =
                             sendReliablePacket clientId chunk
                             rest <- rest.Slice(size)
                         logger.LogInformation("Sent all map chunks to {ClientId}", clientId)
+                        Packets.makeStateDataCtf
+                            1uy
+                            { B = 232uy; G = 214uy; R = 20uy }
+                            { B = 255uy; G = 0uy; R = 0uy }
+                            { B = 0uy; G = 255uy; R = 0uy }
+                            "Blue"
+                            "Green"
+                            { Team1Score = 1uy
+                              Team2Score = 2uy
+                              CaptureLimit = 10uy
+                              Team1Intel = Packets.IntelState.OnGround { X = 256f; Y = 256f; Z = 32f }
+                              Team2Intel = Packets.IntelState.OnGround { X = 256f; Y = 256f; Z = 32f }
+                              Team1BasePos = { X = 0f; Y = 0f; Z = 32f }
+                              Team2BasePos = { X = 512f; Y = 512f; Z = 32f }}
+                        |> sendReliablePacket clientId
                         ()
                     | PacketReceived (clientId, packet) ->
                         match tryFindClient clientId with
@@ -200,3 +219,6 @@ type World(scope : IServiceScope, opts : WorldOptions) as this =
         // This get JIT'd for each event type
         member _.FireEvent<'T when 'T :> IEvent>(ev : 'T) : unit =
             eventManager.Fire(ev)
+
+        member _.SendReliable (client : IWorldClient, packet : Packet): unit =
+            sendReliablePacket client.Id packet

@@ -7,6 +7,7 @@ namespace SharpSpades.World
 open System
 open Microsoft.Extensions.Logging
 open SharpSpades
+open SharpSpades.Net
 
 type WorldId = string
 
@@ -18,6 +19,7 @@ type IWorld =
     abstract member LoggerFactory : ILoggerFactory
 
     abstract member FireEvent<'T when 'T :> IEvent> : 'T -> unit
+    abstract member SendReliable : IWorldClient * Packet -> unit
 
 module World =
     let getLogger (w : IWorld) category =
@@ -28,3 +30,6 @@ module World =
 
     let fire<'T when 'T :> IEvent> (w : IWorld) (ev : 'T) =
         w.FireEvent ev
+
+    let sendReliable (w : IWorld) (client : IWorldClient) (packet : Packet) =
+        w.SendReliable(client, packet)

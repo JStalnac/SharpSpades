@@ -1,4 +1,4 @@
-// Copyright (c) 2025 JStalnac
+// Copyright (c) 2025-2026 JStalnac
 //
 // SPDX-License-Identifier: GPL-3.0-or-later OR EUPL-1.2
 
@@ -81,7 +81,7 @@ let makeExistingPlayer (player : PlayerId) (team : TeamType) (weapon : WeaponTyp
     if name.Length > 15 then
         failwith "Name cannot be longer than 15 bytes"
     let length = 1 + 1 + 1 + 1 + 4 + 3 + name.Length + 1
-    let w = PacketWriter(Packet(PacketType.ExistingPlayer, length))
+    let mutable w = PacketWriter(Packet(PacketType.ExistingPlayer, length))
     w.WriteByte(player : PlayerId)
     w.WriteByte((byte)team)
     w.WriteByte((byte)weapon)
@@ -136,7 +136,7 @@ let makeStateDataCtf (playerId : PlayerId) (fog : Color3) (team1Color : Color3) 
         failwith "The name of team 2 can't be longer than 9 characters"
 
     let length = (1 + 3 + 3 + 3 + 10 + 10 + 1) + (1 + 1 + 1 + 1 + 12 + 12 + 3 * 4 + 3 * 4)
-    let w = PacketWriter(Packet(PacketType.StateData, length))
+    let mutable w = PacketWriter(Packet(PacketType.StateData, length))
     w.WriteByte(playerId)
     w.WriteByte(fog.B)
     w.WriteByte(fog.G)
@@ -148,9 +148,10 @@ let makeStateDataCtf (playerId : PlayerId) (fog : Color3) (team1Color : Color3) 
     w.WriteByte(team2Color.G)
     w.WriteByte(team2Color.R)
     w.WriteBytes(team1Name)
-    w.WriteByte(0uy)
+    w.Consume(10 - team1Name.Length)
     w.WriteBytes(team2Name)
-    w.WriteByte(0uy)
+    w.Consume(10 - team2Name.Length)
+
     w.WriteByte(0uy) // CTF
 
     w.WriteByte(ctfState.Team1Score)

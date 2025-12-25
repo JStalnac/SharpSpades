@@ -3,7 +3,7 @@
  * http://silverspaceship.com/aosmap/aos_file_format.html
  *
  * Copyright (C) 2011 Silver Spaceship Software
- * Copyright (C) 2025 JStalnac
+ * Copyright (C) 2025-2026 JStalnac
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -52,6 +52,8 @@ map_load(struct map *m, const uint8_t *v, int len)
 
 	for (y = 0; y < MAP_X; y++) {
 		for (x = 0; x < MAP_Y; x++) {
+			for (z = 0; z < MAP_Z; z++)
+				map_set(m, x, y, z, DEFAULT_COLOR);
 			z = 0;
 			for(;;) {
 				uint32_t *color;
@@ -103,6 +105,7 @@ map_writer_init(struct map_writer *w)
 {
 	// 4 MB is the initial size for the buffer. Most maps are 2-3 MB encoded
 	// and 4 MB (2^22 bytes) is the smallest power of two above that number.
+	// map_writer_write_byte doubles the size and 64 MB is the maximum size.
 	int cap = 4 * 1024 * 1024;
 
 	memset(w, 0, sizeof(*w));
@@ -130,19 +133,18 @@ map_writer_deinit(struct map_writer *w)
 static void
 map_writer_write_byte(struct map_writer *w, uint8_t b)
 {
-	int new_len;
+	int new_cap;
 
 	if (w->len >= w->capacity) {
-		new_len = w->capacity;
-		do {
-			// Double the length until the contents fit
-			new_len *= 2;
+		// Double the capacity
+		new_cap = w->capacity * 2;
 
-			// 64 MB is the maximum size of the encoded map at
-			// 512x512x64 size
-			assert(new_len <= 64 * 1024 * 1024);
-		} while (new_len <= w->len);
-		assert((w->buffer = realloc(w->buffer, new_len)) != NULL);
+		// 64 MB is the maximum size of the encoded map at
+		// 512x512x64 size
+		assert(new_cap <= 64 * 1024 * 1024);
+
+		assert((w->buffer = realloc(w->buffer, new_cap)) != NULL);
+		w->capacity = new_cap;
 	}
 
 	w->buffer[w->len++] = b;

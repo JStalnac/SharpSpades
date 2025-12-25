@@ -1,11 +1,15 @@
+// Copyright (c) 2025-2026 JStalnac
+//
+// SPDX-License-Identifier: GPL-3.0-or-later OR EUPL-1.2
+
 namespace SharpSpades.World
 
 open System
+open System.Buffers
 open SharpSpades
 open SharpSpades.Native
 
 module Map =
-    open System.Buffers
     type Map = {
         NativePtr : IntPtr
     }
@@ -31,18 +35,18 @@ module Map =
     let processEncodedMap f map =
         let writer = MapWriter()
         use w = fixed &writer
-        if LibSharpSpades.map_writer_init(w) <> 0 then
+        if LibSharpSpades.map_writer_init w <> 0 then
             Error OutOfMemory
         else
             LibSharpSpades.map_write(map.NativePtr, w)
             let span = ReadOnlySpan<byte>(writer.Buffer.ToPointer(), writer.BufferLength)
-            let arr = ArrayPool<byte>.Shared.Rent(writer.BufferLength)
-            span.CopyTo(arr)
-            let mem = ReadOnlyMemory(arr)
+            let arr = ArrayPool<byte>.Shared.Rent writer.BufferLength
+            span.CopyTo arr
+            let mem = ReadOnlyMemory arr
             try
                 f (mem.Slice(0, writer.BufferLength))
             finally
-                ArrayPool<byte>.Shared.Return(arr)
-                LibSharpSpades.map_writer_deinit(w)
+                ArrayPool<byte>.Shared.Return arr
+                LibSharpSpades.map_writer_deinit w
             |> Ok
 

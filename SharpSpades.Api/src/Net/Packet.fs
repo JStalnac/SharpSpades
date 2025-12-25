@@ -1,4 +1,4 @@
-// Copyright (c) 2025 JStalnac
+// Copyright (c) 2025-2026 JStalnac
 //
 // SPDX-License-Identifier: GPL-3.0-or-later OR EUPL-1.2
 
@@ -60,6 +60,7 @@ type Packet(id : PacketType, size : int) =
 
     let mutable buffer = ArrayPool<byte>.Shared.Rent(size + 1)
     do
+        Array.Fill(buffer, 0uy, 0, size + 1)
         buffer[0] <- byte id
 
     let mutable references = 1
@@ -89,7 +90,7 @@ type Packet(id : PacketType, size : int) =
 [<Struct; IsByRefLike>]
 type internal PacketWriter =
     val mutable Body : Span<byte>
-    val mutable Packet : Packet
+    val Packet : Packet
 
     new (packet : Packet) =
         { Body = packet.GetBody(); Packet = packet }
