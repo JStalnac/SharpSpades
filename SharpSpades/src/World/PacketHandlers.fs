@@ -5,14 +5,14 @@ open SharpSpades.Net
 
 module PacketHandlers =
     type PacketHandlerDelegate =
-        delegate of IWorld * IWorldClient * ReadOnlySpan<byte> -> unit
+        delegate of IWorld * IWorldClient * Packet -> unit
 
     [<Struct>]
     type private DelegateContainer = {
         Delegate : PacketHandlerDelegate
     }
 
-    let private handleExistingPlayer (w : IWorld) (client : IWorldClient) (buffer : ReadOnlySpan<byte>) =
+    let private handleExistingPlayer (w : IWorld) (client : IWorldClient) (packet) =
         ()
 
     let private handlers : DelegateContainer array =
@@ -25,4 +25,4 @@ module PacketHandlers =
     let handlePacket world client (packet : Packet) =
         match handlers[int <| byte packet.Id].Delegate with
         | null -> ()
-        | handler -> handler.Invoke(world, client, packet.GetBodyReadOnly())
+        | handler -> handler.Invoke(world, client, packet)

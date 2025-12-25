@@ -60,13 +60,15 @@ type Packet(id : PacketType, size : int) =
 
     let mutable buffer = ArrayPool<byte>.Shared.Rent(size + 1)
     do
-        buffer[0] <- (byte)id
+        buffer[0] <- byte id
 
     let mutable references = 1
 
     member val Id = id
     member val Size = size
-    member val Buffer = buffer
+
+    member _.GetBuffer() =
+        ReadOnlySpan(buffer, 0, size + 1)
 
     member _.GetBody() =
         Span(buffer, 1, size)
@@ -90,7 +92,7 @@ type internal PacketWriter =
     val mutable Packet : Packet
 
     new (packet : Packet) =
-        { Body = Span(packet.Buffer); Packet = packet }
+        { Body = packet.GetBody(); Packet = packet }
 
     member x.Consume(size : int) =
         x.Body <- x.Body.Slice(size)

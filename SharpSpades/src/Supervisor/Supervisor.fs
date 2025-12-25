@@ -68,7 +68,7 @@ type Supervisor(scope : IServiceScope, opts : SupervisorOptions) as this =
     let sendPacket client flags (packet : Packet) =
         match tryFindClient client with
         | Some _ ->
-            match host.SendPacket(client, flags, packet.Buffer) with
+            match host.SendPacket(client, flags, packet.GetBuffer()) with
             | 0 -> Ok ()
             | _ -> Error "Failed to send packet"
         | None ->
