@@ -110,7 +110,94 @@ let makeCreatePlayer (player : PlayerId) (weapon : WeaponType) (team : TeamType)
     w.WriteByte(0uy)
     w.GetPacket()
 
-// TODO: StateData (CTF State + TC State)
+// TODO: TC state data
+
+// TODO: Consider a better place for these types
+type IntelState =
+    | OnGround of location : Vec3f
+    | Carried of carrier : PlayerId
+
+type CtfStateData = {
+    Team1Score : byte
+    Team2Score : byte
+    CaptureLimit : byte
+    Team1Intel : IntelState
+    Team2Intel : IntelState
+    Team1BasePos : Vec3f
+    Team2BasePos : Vec3f
+}
+
+let makeStateDataCtf (playerId : PlayerId) (fog : Color3) (team1Color : Color3) (team2Color : Color3) (team1Name : string) (team2Name : string) (ctfState : CtfStateData) =
+    let team1Name = codePage437.GetBytes(team1Name)
+    if team1Name.Length > 9 then
+        failwith "The name of team 1 can't be longer than 9 characters"
+    let team2Name = codePage437.GetBytes(team2Name)
+    if team2Name.Length > 9 then
+        failwith "The name of team 2 can't be longer than 9 characters"
+
+    let length = (1 + 3 + 3 + 3 + 10 + 10 + 1) + (1 + 1 + 1 + 1 + 12 + 12 + 3 * 4 + 3 * 4)
+    let w = PacketWriter(Packet(PacketType.StateData, length))
+    w.WriteByte(playerId)
+    w.WriteByte(fog.B)
+    w.WriteByte(fog.G)
+    w.WriteByte(fog.R)
+    w.WriteByte(team1Color.B)
+    w.WriteByte(team1Color.G)
+    w.WriteByte(team1Color.R)
+    w.WriteByte(team2Color.B)
+    w.WriteByte(team2Color.G)
+    w.WriteByte(team2Color.R)
+    w.WriteBytes(team1Name)
+    w.WriteByte(0uy)
+    w.WriteBytes(team2Name)
+    w.WriteByte(0uy)
+    w.WriteByte(0uy) // CTF
+
+    w.WriteByte(ctfState.Team1Score)
+    w.WriteByte(ctfState.Team2Score)
+    w.WriteByte(ctfState.CaptureLimit)
+
+    match ctfState.Team1Intel, ctfState.Team2Intel with
+    | OnGround loc1, OnGround loc2 ->
+        w.WriteByte((1uy <<< 0) &&& (1uy <<< 1))
+        w.WriteFloat(loc1.X)
+        w.WriteFloat(loc1.Y)
+        w.WriteFloat(loc1.Z)
+        w.WriteFloat(loc2.X)
+        w.WriteFloat(loc2.Y)
+        w.WriteFloat(loc2.Z)
+        ()
+    | OnGround loc1, Carried carrier2 ->
+        w.WriteByte(1uy <<< 0)
+        w.WriteFloat(loc1.X)
+        w.WriteFloat(loc1.Y)
+        w.WriteFloat(loc1.Z)
+        w.WriteByte(carrier2)
+        w.Consume(11)
+        ()
+    | Carried carrier1, OnGround loc2 ->
+        w.WriteByte(0uy <<< 1)
+        w.WriteByte(carrier1)
+        w.Consume(11)
+        w.WriteFloat(loc2.X)
+        w.WriteFloat(loc2.Y)
+        w.WriteFloat(loc2.Z)
+        ()
+    | Carried carrier1, Carried carrier2 ->
+        w.WriteByte(0uy)
+        w.WriteByte(carrier1)
+        w.Consume(11)
+        w.WriteByte(carrier2)
+        w.Consume(11)
+        ()
+
+    w.WriteFloat(ctfState.Team1BasePos.X)
+    w.WriteFloat(ctfState.Team1BasePos.Y)
+    w.WriteFloat(ctfState.Team1BasePos.Z)
+    w.WriteFloat(ctfState.Team2BasePos.X)
+    w.WriteFloat(ctfState.Team2BasePos.Y)
+    w.WriteFloat(ctfState.Team2BasePos.Z)
+    w.GetPacket()
 
 let readChatMessage packet (player : outref<_>) (messageType : outref<_>) (message : outref<_>) =
     let r = PacketReader(packet)
