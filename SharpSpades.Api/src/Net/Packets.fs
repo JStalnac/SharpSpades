@@ -9,7 +9,9 @@ open System.Text
 open SharpSpades
 open Microsoft.FSharp.NativeInterop
 
-// TODO: Put the Encoding.GetEncoding(437) stuff in a helper function
+let private codePage437 =
+    Encoding.RegisterProvider(CodePagesEncodingProvider.Instance)
+    Encoding.GetEncoding(437)
 
 // TODO: World Update
 
@@ -67,17 +69,15 @@ let readExistingPlayer packet (player : outref<PlayerId>) (team : outref<TeamTyp
     let rest = r.ReadBytes(0)
     if rest.Length > 16 then
         failwith "Name must be less than 16 bytes long"
-    let encoding = Encoding.GetEncoding(437)
     for i = 0 to 16 do
         if rest[i] = 0x00uy then
             let span = rest.Slice(0, i)
-            name <- encoding.GetString(span)
+            name <- codePage437.GetString(span)
         else if i = 16 then
-            name <- encoding.GetString(rest.Slice(0, 15))
+            name <- codePage437.GetString(rest.Slice(0, 15))
 
 let makeExistingPlayer (player : PlayerId) (team : TeamType) (weapon : WeaponType) (tool : Tool) (kills : uint32) (blockColor : Color3) (name : string) =
-    let encoding = Encoding.GetEncoding(437)
-    let name = encoding.GetBytes(name)
+    let name = codePage437.GetBytes(name)
     if name.Length > 15 then
         failwith "Name cannot be longer than 15 bytes"
     let length = 1 + 1 + 1 + 1 + 4 + 3 + name.Length + 1
@@ -95,8 +95,7 @@ let makeExistingPlayer (player : PlayerId) (team : TeamType) (weapon : WeaponTyp
     w.GetPacket()
 
 let makeCreatePlayer (player : PlayerId) (weapon : WeaponType) (team : TeamType) (position : Vec3f) (name : string) =
-    let encoding = Encoding.GetEncoding(437)
-    let name = encoding.GetBytes(name)
+    let name = codePage437.GetBytes(name)
     if name.Length > 15 then
         failwith "Name cannot be longer than 15 bytes"
     let length = 1 + 1 + 1 + 1 + 4 + 3 + name.Length + 1
@@ -128,16 +127,14 @@ let readChatMessage packet (player : outref<_>) (messageType : outref<_>) (messa
         match s[0] with
         | 0xFFuy -> Encoding.UTF8.GetString(s.Slice(1))
         | _ ->
-            let encoding = Encoding.GetEncoding(437)
-            encoding.GetString(s)
+            codePage437.GetString(s)
 
 let makeChatMessage sender messageType message useUtf8 =
     let b =
         if useUtf8 then
             Encoding.UTF8.GetBytes(message : string)
         else
-            let encoding = Encoding.GetEncoding(437)
-            encoding.GetBytes(message)
+            codePage437.GetBytes(message)
 
     let w = PacketWriter(Packet(PacketType.ChatMessage, 1 + 1 + b.Length + 1))
     w.WriteByte((byte)(sender : PlayerId))
@@ -164,13 +161,12 @@ let makeVersionRequest () =
 
 let readVersionResponse packet (clientBrand : outref<ClientBrand>) (version : outref<byte * byte * byte>) (extraInfo : outref<string>) =
     let r = PacketReader(packet)
-    let encoding = Encoding.GetEncoding(437)
     clientBrand <-
         let span =
             let p = NativePtr.stackalloc<byte> 1 |> NativePtr.toVoidPtr
             Span(p, 1)
         span[0] <- r.ReadByte()
-        match encoding.GetString(span)[0] with
+        match codePage437.GetString(span)[0] with
         | 'o' -> OpenSpades
         | 'B' -> BetterSpades
         | 'a' -> Ace
@@ -182,9 +178,9 @@ let readVersionResponse packet (clientBrand : outref<ClientBrand>) (version : ou
             String.Empty
         else
             if rest[rest.Length - 1] = 0x00uy then
-                encoding.GetString(rest.Slice(0, rest.Length - 1))
+                codePage437.GetString(rest.Slice(0, rest.Length - 1))
             else
-                encoding.GetString(rest)
+                codePage437.GetString(rest)
 
 
 
