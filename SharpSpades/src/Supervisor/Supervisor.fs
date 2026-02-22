@@ -60,6 +60,14 @@ type Supervisor(scope : IServiceScope, opts : SupervisorOptions) as this =
     let messages = Channel.CreateUnbounded<SupervisorMessage>()
     let clients = Dictionary<ClientId, ClientInfo>()
 
+    let world = World(services.CreateScope(), {
+            Id = "main"
+            Messages = Channel.CreateUnbounded()
+            Output = messages.Writer
+            CancellationToken = opts.CancellationToken
+            Plugins = opts.Plugins
+        })
+
     let tryFindClient id =
         match clients.TryGetValue(id) with
         | true, client -> Some client
@@ -90,6 +98,18 @@ type Supervisor(scope : IServiceScope, opts : SupervisorOptions) as this =
         })
         logger.LogInformation("Client {ClientId} connected", clientId)
         ()
+
+    let handleReceive clientId packet =
+        match tryFindClient clientId with
+        | Some client ->
+            match client.World with
+            | Some w ->
+                world.Messages.Writer
+                    .TryWrite(PacketReceived (clientId, packet))
+                |> ignore
+                ()
+            | None -> ()
+        | None -> ()
 
     let handleDisconnect clientId disconnectType =
         let ev = { Reason = disconnectType } : OnClientDisconnect
@@ -130,13 +150,6 @@ type Supervisor(scope : IServiceScope, opts : SupervisorOptions) as this =
                 return ()
             logger.LogDebug("Plugins initialised")
 
-            let world = World(services.CreateScope(), {
-                    Id = "main"
-                    Messages = Channel.CreateUnbounded()
-                    Output = messages.Writer
-                    CancellationToken = opts.CancellationToken
-                    Plugins = opts.Plugins
-                })
             world.Run() |> Async.Start
 
             host.OnConnect (fun (clientId : ClientId) version ->
@@ -147,6 +160,12 @@ type Supervisor(scope : IServiceScope, opts : SupervisorOptions) as this =
                 world.Messages.Writer.TryWrite(TransferClient clientId) |> ignore
                 CallbackResult.Continue)
             host.OnReceive (fun (client : ClientId) buffer ->
+                if buffer.Length > 0 then
+                    let packetId = enum<PacketType>(int buffer[0])
+                    let packet = Packet.FromBuffer(packetId, buffer.Slice 1)
+                    handleReceive client packet
+                else
+                    ()
                 CallbackResult.Continue)
             host.OnDisconnect (fun (client : ClientId) ty ->
                 handleDisconnect client ty

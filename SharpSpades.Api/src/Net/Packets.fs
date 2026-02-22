@@ -69,11 +69,11 @@ let readExistingPlayer packet (player : outref<PlayerId>) (team : outref<TeamTyp
     let rest = r.ReadBytes 0
     if rest.Length > 16 then
         failwith "Name must be less than 16 bytes long"
-    for i = 0 to 16 do
+    for i = 0 to 15 do
         if rest[i] = 0x00uy then
             let span = rest.Slice(0, i)
             name <- codePage437.GetString span
-        else if i = 16 then
+        else if i = 15 then
             name <- codePage437.GetString(rest.Slice(0, 15))
 
 let makeExistingPlayer (player : PlayerId) (team : TeamType) (weapon : WeaponType) (tool : Tool) (kills : uint32) (blockColor : Color3) (name : string) =

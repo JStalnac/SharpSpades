@@ -68,6 +68,11 @@ type Packet(id : PacketType, size : int) =
     member val Id = id
     member val Size = size
 
+    static member FromBuffer(id : PacketType, buffer : ReadOnlySpan<byte>) =
+        let packet = Packet(id, buffer.Length)
+        buffer.CopyTo(packet.GetBody())
+        packet
+
     member _.GetBuffer() =
         ReadOnlySpan(buffer, 0, size + 1)
 
