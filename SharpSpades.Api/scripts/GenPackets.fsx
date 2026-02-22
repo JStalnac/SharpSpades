@@ -1,5 +1,5 @@
 #!/usr/bin/env -S dotnet fsi --
-// Copyright (c) 2025 JStalnac
+// Copyright (c) 2025-2026 JStalnac
 //
 // SPDX-License-Identifier: GPL-3.0-or-later OR EUPL-1.2
 
@@ -52,7 +52,7 @@ let generate p : string=
             |> List.map (fun f -> sprintf "(%s : outref<_>)" (getName f))
             |> String.concat " ")
 
-        "    let r = PacketReader(packet)"
+        "    let mutable r = PacketReader packet"
 
         for f in p.Fields do
             match f with
@@ -63,21 +63,21 @@ let generate p : string=
             | Player n
                 -> sprintf "    %s <- (r.ReadByte() : PlayerId)" n
             | InputState n
-                -> sprintf "    %s <- enum<InputState>((int32)(r.ReadByte()))" n
+                -> sprintf "    %s <- enum<InputState>(int32(r.ReadByte()))" n
             | HitType n
-                -> sprintf "    %s <- enum<HitType>((int32)(r.ReadByte()))" n
+                -> sprintf "    %s <- enum<HitType>(int32(r.ReadByte()))" n
             | DamageType n
-                -> sprintf "    %s <- enum<DamageType>((int32)(r.ReadByte()))" n
+                -> sprintf "    %s <- enum<DamageType>(int32(r.ReadByte()))" n
             | Tool n
-                -> sprintf "    %s <- enum<Tool>((int32)(r.ReadByte()))" n
+                -> sprintf "    %s <- enum<Tool>(int32(r.ReadByte()))" n
             | TeamType n
-                -> sprintf "    %s <- enum<TeamType>((int32)(r.ReadByte()))" n
+                -> sprintf "    %s <- enum<TeamType>(int32(r.ReadByte()))" n
             | WeaponType n
-                -> sprintf "    %s <- enum<WeaponType>((int32)(r.ReadByte()))" n
+                -> sprintf "    %s <- enum<WeaponType>(int32(r.ReadByte()))" n
             | BlockAction n
-                -> sprintf "    %s <- enum<BlockActionType>((int32)(r.ReadByte()))" n
+                -> sprintf "    %s <- enum<BlockActionType>(int32(r.ReadByte()))" n
             | KillType n
-                -> sprintf "    %s <- enum<KillType>((int32)(r.ReadByte()))" n
+                -> sprintf "    %s <- enum<KillType>(int32(r.ReadByte()))" n
             | UInt32 n
                 -> sprintf "    %s <- r.ReadUInt32()" n
             | Location n
@@ -93,51 +93,51 @@ let generate p : string=
             p.Name
             (p.Fields |> List.map getName |> String.concat " ")
 
-        sprintf "    let w = PacketWriter(Packet(PacketType.%s, %d))"
+        sprintf "    let mutable w = PacketWriter(Packet(PacketType.%s, %d))"
             p.Name length
 
         for f in p.Fields do
             match f with
             | Byte n
-                -> sprintf "    w.WriteByte(%s)" n
+                -> sprintf "    w.WriteByte %s" n
             | SByte n
-                -> sprintf "    w.WriteByte((byte)(%s : sbyte))" n
+                -> sprintf "    w.WriteByte(byte(%s : sbyte))" n
             | Player n
-                -> sprintf "    w.WriteByte((byte)(%s : PlayerId))" n
+                -> sprintf "    w.WriteByte(byte(%s : PlayerId))" n
             | InputState n
-                -> sprintf "    w.WriteByte((byte)(%s : InputState))" n
+                -> sprintf "    w.WriteByte(byte(%s : InputState))" n
             | HitType n
-                -> sprintf "    w.WriteByte((byte)(%s : HitType))" n
+                -> sprintf "    w.WriteByte(byte(%s : HitType))" n
             | DamageType n
-                -> sprintf "    w.WriteByte((byte)(%s : DamageType))" n
+                -> sprintf "    w.WriteByte(byte(%s : DamageType))" n
             | Tool n
-                -> sprintf "    w.WriteByte((byte)(%s : Tool))" n
+                -> sprintf "    w.WriteByte(byte(%s : Tool))" n
             | TeamType n
-                -> sprintf "    w.WriteByte((byte)(%s : TeamType))" n
+                -> sprintf "    w.WriteByte(byte(%s : TeamType))" n
             | WeaponType n
-                -> sprintf "    w.WriteByte((byte)(%s : WeaponType))" n
+                -> sprintf "    w.WriteByte(byte(%s : WeaponType))" n
             | BlockAction n
-                -> sprintf "    w.WriteByte((byte)(%s : BlockActionType))" n
+                -> sprintf "    w.WriteByte(byte(%s : BlockActionType))" n
             | KillType n
-                -> sprintf "    w.WriteByte((byte)%s)" n
+                -> sprintf "    w.WriteByte(byte %s)" n
             | UInt32 n
-                -> sprintf "    w.WriteUInt32(%s)" n
+                -> sprintf "    w.WriteUInt32 %s" n
             | Location n
                 -> yield! [
                     sprintf "    let loc : Location = %s" n
-                    "    w.WriteInt32(loc.X)"
-                    "    w.WriteInt32(loc.Y)"
-                    "    w.WriteInt32(loc.Z)"
+                    "    w.WriteInt32 loc.X"
+                    "    w.WriteInt32 loc.Y"
+                    "    w.WriteInt32 loc.Z"
                 ]
 
             | Float n
-                -> sprintf "    w.WriteFloat(%s)" n
+                -> sprintf "    w.WriteFloat %s" n
             | Vec3f n
                 -> yield! [
                     sprintf "    let vec : Vec3f = %s" n
-                    "    w.WriteFloat(vec.X)"
-                    "    w.WriteFloat(vec.Y)"
-                    "    w.WriteFloat(vec.Z)"
+                    "    w.WriteFloat vec.X"
+                    "    w.WriteFloat vec.Y"
+                    "    w.WriteFloat vec.Z"
                 ]
 
         "    w.GetPacket()"

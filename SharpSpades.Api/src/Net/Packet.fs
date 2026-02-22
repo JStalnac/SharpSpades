@@ -56,7 +56,7 @@ type PacketFlags =
 type Packet(id : PacketType, size : int) =
     do
         if size < 0 then
-            raise (ArgumentOutOfRangeException(nameof(size)))
+            raise (ArgumentOutOfRangeException(nameof size))
 
     let mutable buffer = ArrayPool<byte>.Shared.Rent(size + 1)
     do
@@ -83,7 +83,7 @@ type Packet(id : PacketType, size : int) =
     member _.RemoveRef() =
         match Interlocked.Decrement(&references) with
         | 0 ->
-            ArrayPool<_>.Shared.Return(buffer)
+            ArrayPool<_>.Shared.Return buffer
             buffer <- null
         | _ -> ()
 
@@ -96,31 +96,31 @@ type internal PacketWriter =
         { Body = packet.GetBody(); Packet = packet }
 
     member x.Consume(size : int) =
-        x.Body <- x.Body.Slice(size)
+        x.Body <- x.Body.Slice size
 
     member x.WriteByte(b : byte) =
         x.Body[0] <- b
-        x.Consume(1)
+        x.Consume 1
 
     member x.WriteSByte(b : sbyte) =
-        x.Body[0] <- (byte)b
-        x.Consume(1)
+        x.Body[0] <- byte b
+        x.Consume 1
 
     member x.WriteFloat(f : float32) =
         BinaryPrimitives.WriteSingleLittleEndian(x.Body, f)
-        x.Consume(4)
+        x.Consume 4
 
     member x.WriteUInt32(i : uint32) =
         BinaryPrimitives.WriteUInt32LittleEndian(x.Body, i)
-        x.Consume(4)
+        x.Consume 4
 
     member x.WriteInt32(i : int32) =
         BinaryPrimitives.WriteInt32LittleEndian(x.Body, i)
-        x.Consume(4)
+        x.Consume 4
 
     member x.WriteBytes(span : ReadOnlySpan<byte>) =
-        span.CopyTo(x.Body)
-        x.Consume(span.Length)
+        span.CopyTo x.Body
+        x.Consume span.Length
 
     member x.GetPacket() = x.Packet
 
@@ -132,31 +132,31 @@ type internal PacketReader =
         { Body = packet.GetBodyReadOnly() }
 
     member x.Consume(size : int) =
-        x.Body <- x.Body.Slice(size)
+        x.Body <- x.Body.Slice size
 
     member x.ReadByte() : byte =
         let b = x.Body[0]
-        x.Consume(1)
+        x.Consume 1
         b
 
     member x.ReadSByte() : sbyte =
-        let b = (sbyte)x.Body[0]
-        x.Consume(1)
+        let b = sbyte x.Body[0]
+        x.Consume 1
         b
 
     member x.ReadFloat() : float32 =
-        let f = BinaryPrimitives.ReadSingleLittleEndian(x.Body)
-        x.Consume(4)
+        let f = BinaryPrimitives.ReadSingleLittleEndian x.Body
+        x.Consume 4
         f
 
     member x.ReadUInt32() : uint32 =
-        let i = BinaryPrimitives.ReadUInt32LittleEndian(x.Body)
-        x.Consume(4)
+        let i = BinaryPrimitives.ReadUInt32LittleEndian x.Body
+        x.Consume 4
         i
 
     member x.ReadInt32() : int32 =
-        let i = BinaryPrimitives.ReadInt32LittleEndian(x.Body)
-        x.Consume(4)
+        let i = BinaryPrimitives.ReadInt32LittleEndian x.Body
+        x.Consume 4
         i
 
     member x.ReadBytes(count : int) : ReadOnlySpan<byte> =
@@ -166,7 +166,7 @@ type internal PacketReader =
             else if count = 0 then
                 x.Body
             else
-                raise (ArgumentOutOfRangeException(nameof(count)))
+                raise (ArgumentOutOfRangeException(nameof count))
                 ReadOnlySpan<_>.Empty
-        x.Consume(span.Length)
+        x.Consume span.Length
         span
